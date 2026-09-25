@@ -78,7 +78,7 @@ export default function Billing() {
               </div>
             </Card>
 
-            <PlanAndPayments minutesUsed={data.overview.month.minutes} />
+            <PlanAndPayments />
           </>
         )}
       </div>

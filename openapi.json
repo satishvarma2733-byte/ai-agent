@@ -892,10 +892,14 @@
                 "type": "null"
               }
             ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/UsageOut"
           }
         },
         "required": [
           "plan",
+          "usage",
           "plans",
           "invoices",
           "can_manage"
@@ -4441,6 +4445,68 @@
           "bookings_prev_7d"
         ],
         "title": "Trend",
+        "type": "object"
+      },
+      "UsageOut": {
+        "description": "This month's usage against the plan; a None limit means unlimited.",
+        "properties": {
+          "agents": {
+            "title": "Agents",
+            "type": "integer"
+          },
+          "agents_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agents Limit"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "members_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Members Limit"
+          },
+          "minutes_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes Limit"
+          },
+          "minutes_used": {
+            "title": "Minutes Used",
+            "type": "integer"
+          },
+          "outbound_blocked": {
+            "title": "Outbound Blocked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "minutes_used",
+          "agents",
+          "members",
+          "outbound_blocked"
+        ],
+        "title": "UsageOut",
         "type": "object"
       },
       "UserCreate": {

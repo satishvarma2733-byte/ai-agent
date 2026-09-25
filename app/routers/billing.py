@@ -64,8 +64,20 @@ class InvoiceOut(BaseModel):
     created_at: UTCDateTime
 
 
+class UsageOut(BaseModel):
+    """This month's usage against the plan; a None limit means unlimited."""
+    minutes_used: int
+    minutes_limit: Optional[int] = None
+    agents: int
+    agents_limit: Optional[int] = None
+    members: int
+    members_limit: Optional[int] = None
+    outbound_blocked: bool
+
+
 class BillingOut(BaseModel):
     plan: str
+    usage: UsageOut
     subscription: Optional[SubscriptionOut] = None
     plans: List[PlanOut]
     invoices: List[InvoiceOut]
@@ -97,13 +109,18 @@ def _billing(db: Session, user: User) -> BillingOut:
                                   cancel_at_period_end=sub.cancel_at_period_end)
     invoices = db.query(BillingInvoice).filter(BillingInvoice.tenant_id == user.tenant_id).order_by(
         BillingInvoice.created_at.desc()).limit(50).all()
+    from app.services import plan_limits
+    u = plan_limits.usage(db, tenant)
     return BillingOut(
         plan=tenant.plan if tenant else billing.FREE_PLAN,
+        usage=UsageOut(minutes_used=u.minutes_used, minutes_limit=u.minutes_limit, agents=u.agents,
+                       agents_limit=u.agents_limit, members=u.members, members_limit=u.members_limit,
+                       outbound_blocked=u.outbound_blocked),
         subscription=sub_out,
         plans=[PlanOut(id=p.id, name=p.name, minutes_included=p.minutes_included, features=p.features,
                        prices=[PriceOut(provider=pr.provider, amount=pr.amount, currency=pr.currency,
                                         available=billing.provider_configured(pr.provider)) for pr in p.prices.values()])
-               for p in plans],
+               for p in plans if p.prices],  # plans without prices (e.g. "free") only set limits
         invoices=[InvoiceOut(id=i.id, provider=i.provider, number=i.number, amount=i.amount_minor / 100, currency=i.currency,
                              status=i.status, url=i.url, period_start=_utc(i.period_start), period_end=_utc(i.period_end),
                              created_at=_utc(i.created_at)) for i in invoices],

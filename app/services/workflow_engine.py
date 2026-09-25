@@ -61,8 +61,8 @@ class WorkflowEngine:
             self.loop_task = asyncio.create_task(self._worker_loop())
 
     async def _worker_loop(self):
-        from app.services import appointment_reminders, call_summaries
-        last_reminder_check = last_summary_check = 0.0
+        from app.services import appointment_reminders, call_summaries, plan_limits
+        last_reminder_check = last_summary_check = last_limits_check = 0.0
         while True:
             try:
                 if time.monotonic() - last_reminder_check >= appointment_reminders.CHECK_SECONDS:
@@ -71,6 +71,9 @@ class WorkflowEngine:
                 if time.monotonic() - last_summary_check >= call_summaries.CHECK_SECONDS:
                     last_summary_check = time.monotonic()
                     await asyncio.to_thread(call_summaries.send_due)
+                if time.monotonic() - last_limits_check >= plan_limits.CHECK_SECONDS:
+                    last_limits_check = time.monotonic()
+                    await asyncio.to_thread(plan_limits.check_alerts)
                 await self.poll_once()
             except asyncio.CancelledError:
                 break
@@ -137,6 +140,11 @@ class WorkflowEngine:
         """Perform one action and describe what actually happened."""
         if act_type == "ai_call":
             from app.core.runtime_config import load_runtime_config as _load_runtime_config
+            from app.services import plan_limits
+            try:
+                plan_limits.check_outbound(db, tenant_id)
+            except plan_limits.LimitReached as exc:
+                raise RuntimeError(str(exc)) from exc
             result = await dispatch_outbound_call(lead.phone, config=_load_runtime_config(), caller_name=lead.name,
                                                   extra_metadata={"tenant_id": tenant_id})
             db.add(CallLog(tenant_id=tenant_id, phone_number=lead.phone, caller_name=lead.name,

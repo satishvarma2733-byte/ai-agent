@@ -81,6 +81,11 @@ def list_agents(db: Session = Depends(get_db), current_user: User = Depends(get_
 @router.post("", response_model=AgentOut, status_code=status.HTTP_201_CREATED)
 def create_agent(payload: AgentCreate, request: Request, db: Session = Depends(get_db),
                  current_user: User = Depends(require_builder)):
+    from app.services import plan_limits
+    try:
+        plan_limits.check_new_agent(db, current_user.tenant_id)
+    except plan_limits.LimitReached as exc:
+        raise HTTPException(status_code=402, detail=str(exc))
     fields = payload.model_dump(include=_COMPAT_FIELDS, exclude_none=True)
     try:
         agent = svc.create_agent(db, current_user, name=payload.name.strip(), description=payload.description,

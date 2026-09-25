@@ -167,6 +167,15 @@ def create_invitation(
         raise HTTPException(status_code=403, detail="You can't invite someone with a role higher than your own.")
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=409, detail="This email already has an aVn account.")
+    from app.services import plan_limits
+    pending_same = db.query(Invitation.id).filter(
+        Invitation.tenant_id == current_user.tenant_id, Invitation.email == email,
+        Invitation.accepted_at.is_(None), Invitation.revoked_at.is_(None), Invitation.expires_at > utcnow()).first()
+    if not pending_same:  # re-inviting the same address doesn't add a seat
+        try:
+            plan_limits.check_new_member(db, current_user.tenant_id)
+        except plan_limits.LimitReached as exc:
+            raise HTTPException(status_code=402, detail=str(exc))
 
     now = utcnow()
     # Re-inviting replaces any pending invitation for the same address.

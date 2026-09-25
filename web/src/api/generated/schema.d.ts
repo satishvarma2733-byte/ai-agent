@@ -2392,6 +2392,7 @@ export interface components {
             /** Plans */
             plans: components["schemas"]["PlanOut"][];
             subscription?: components["schemas"]["SubscriptionOut"] | null;
+            usage: components["schemas"]["UsageOut"];
         };
         /** Body_import_leads_api_crm_leads_import_post */
         Body_import_leads_api_crm_leads_import_post: {
@@ -3695,6 +3696,26 @@ export interface components {
             calls_7d: number;
             /** Calls Prev 7D */
             calls_prev_7d: number;
+        };
+        /**
+         * UsageOut
+         * @description This month's usage against the plan; a None limit means unlimited.
+         */
+        UsageOut: {
+            /** Agents */
+            agents: number;
+            /** Agents Limit */
+            agents_limit?: number | null;
+            /** Members */
+            members: number;
+            /** Members Limit */
+            members_limit?: number | null;
+            /** Minutes Limit */
+            minutes_limit?: number | null;
+            /** Minutes Used */
+            minutes_used: number;
+            /** Outbound Blocked */
+            outbound_blocked: boolean;
         };
         /**
          * UserCreate

@@ -18,6 +18,14 @@ router = APIRouter(tags=["Call Management"])
 SINGLE_CALLS_PER_HOUR = 30
 MAX_BULK_NUMBERS = 100
 
+def _check_minutes(db: Session, tenant_id: str) -> None:
+    from app.services import plan_limits
+    try:
+        plan_limits.check_outbound(db, tenant_id)
+    except plan_limits.LimitReached as exc:
+        raise HTTPException(status_code=402, detail=str(exc))
+
+
 @router.post("/api/call/single")
 async def call_single(
     request: Request,
@@ -30,6 +38,7 @@ async def call_single(
     caller_name = str(data.get("caller_name") or "").strip()
     if not phone:
         raise HTTPException(status_code=422, detail="phone is required")
+    _check_minutes(db, current_user.tenant_id)
     # Every dial costs money and reaches a real person: cap it per user.
     limit_key = f"dial:{current_user.id}"
     if ratelimit.is_limited(limit_key, SINGLE_CALLS_PER_HOUR, 3600):
@@ -71,6 +80,7 @@ async def call_bulk(
     current_user: User = Depends(RoleChecker(["Manager"]))
 ):
     """Dispatch calls to several numbers at once (Manager or higher, up to MAX_BULK_NUMBERS)."""
+    _check_minutes(db, current_user.tenant_id)
     data = await request.json()
     raw_numbers = data.get("numbers") or data.get("phone_numbers") or ""
     

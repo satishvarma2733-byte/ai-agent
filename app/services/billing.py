@@ -48,12 +48,21 @@ class Price:
 
 
 @dataclass
+class Limits:
+    """What a plan allows; None means no limit."""
+    minutes_per_month: int | None = None
+    agents: int | None = None
+    members: int | None = None
+
+
+@dataclass
 class Plan:
     id: str
     name: str
     minutes_included: int
     features: list[str] = field(default_factory=list)
     prices: dict[str, Price] = field(default_factory=dict)
+    limits: Limits = field(default_factory=Limits)
 
 
 def http() -> httpx.Client:
@@ -96,9 +105,21 @@ def load_plans() -> list[Plan]:
             price_id = p.get("plan_id") if provider == "razorpay" else p.get("price_id")
             if provider in ("razorpay", "stripe") and price_id:
                 prices[provider] = Price(provider, price_id, float(p.get("amount", 0)), str(p.get("currency", "")).upper())
+        raw_limits = item.get("limits") or {}
+        limits = Limits(**{k: (int(raw_limits[k]) if raw_limits.get(k) is not None else None)
+                           for k in ("minutes_per_month", "agents", "members")})
         plans.append(Plan(id=str(item["id"]), name=str(item["name"]), minutes_included=int(item.get("minutes_included", 0)),
-                          features=[str(f) for f in item.get("features", [])], prices=prices))
+                          features=[str(f) for f in item.get("features", [])], prices=prices, limits=limits))
     return plans
+
+
+def plan_for_workspace(tenant: Tenant, plans: list[Plan] | None = None) -> Plan | None:
+    """The plan whose limits apply: the workspace's paid plan by name, or the "free" entry for Free workspaces."""
+    plans = load_plans() if plans is None else plans
+    name = (tenant.plan or FREE_PLAN).strip().lower()
+    if name == FREE_PLAN.lower():
+        return next((p for p in plans if p.id == "free"), None)
+    return next((p for p in plans if p.name.lower() == name or p.id == name), None)
 
 
 def find_plan(plan_id: str) -> Plan | None:

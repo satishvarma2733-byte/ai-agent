@@ -25,7 +25,7 @@ function statusText(s: NonNullable<BillingOverview['subscription']>) {
 }
 
 // Paid plan: buy through Razorpay or Stripe, see the subscription and invoices. Only the owner can pay or cancel.
-export default function PlanAndPayments({ minutesUsed }: { minutesUsed: number }) {
+export default function PlanAndPayments() {
   const [data, setData] = useState<BillingOverview | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [params, setParams] = useSearchParams()
@@ -74,10 +74,47 @@ export default function PlanAndPayments({ minutesUsed }: { minutesUsed: number }
 
   const sub = data.subscription
   const hasPlan = sub && (sub.status === 'active' || sub.status === 'past_due')
-  const current = data.plans.find(p => p.id === sub?.plan_id)
+
+  const usage = data.usage
+  const meters = [
+    { label: 'Call minutes this month', used: usage.minutes_used, limit: usage.minutes_limit },
+    { label: 'AI agents', used: usage.agents, limit: usage.agents_limit },
+    { label: 'Team members (incl. pending invitations)', used: usage.members, limit: usage.members_limit },
+  ].filter(m => m.limit !== null && m.limit !== undefined) as { label: string; used: number; limit: number }[]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {usage.outbound_blocked && (
+        <Card style={{ borderLeft: '3px solid var(--color-danger)' }}>
+          <div role="alert" style={{ fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
+            This month's call minutes are used up, so outbound calls and campaigns are paused until next month.
+            Inbound calls are still answered.{data.can_manage ? ' Upgrade below to call now.' : ' Ask the workspace owner to upgrade.'}
+          </div>
+        </Card>
+      )}
+      {meters.length > 0 && (
+        <Card>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12 }}>{data.plan} plan limits</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560 }}>
+            {meters.map(m => {
+              const pct = Math.min(100, Math.round((m.used / Math.max(m.limit, 1)) * 100))
+              const color = pct >= 100 ? 'var(--color-danger)' : pct >= 80 ? 'var(--color-warning)' : '#22D3A5'
+              return (
+                <div key={m.label}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{m.label}</span>
+                    <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{m.used.toLocaleString()} / {m.limit.toLocaleString()}</span>
+                  </div>
+                  <div role="progressbar" aria-label={m.label} aria-valuemin={0} aria-valuemax={m.limit} aria-valuenow={m.used}
+                    style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
       {sub && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -88,11 +125,6 @@ export default function PlanAndPayments({ minutesUsed }: { minutesUsed: number }
               <div style={{ fontSize: 12.5, color: sub.status === 'past_due' ? 'var(--color-danger)' : 'var(--color-text-muted)', marginTop: 2 }}>
                 {statusText(sub)}
               </div>
-              {current && current.minutes_included > 0 && hasPlan && (
-                <div style={{ fontSize: 12.5, color: 'var(--color-text-muted)', marginTop: 2 }}>
-                  {minutesUsed.toLocaleString()} of {current.minutes_included.toLocaleString()} included minutes used this month
-                </div>
-              )}
             </div>
             {data.can_manage && hasPlan && (
               <div style={{ display: 'flex', gap: 8 }}>

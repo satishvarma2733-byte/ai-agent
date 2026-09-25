@@ -25,11 +25,26 @@ def _utcnow() -> datetime:
 
 def _claim_batch() -> list[dict]:
     """Advance campaign state and mark the next leads as calling. Returns dispatch jobs."""
+    from app.services import notifications, plan_limits
     db = SessionLocal()
     jobs: list[dict] = []
+    blocked: dict[str, bool] = {}
     try:
         now = _utcnow()
         for camp in db.query(Campaign).filter(Campaign.status == "running").all():
+            if camp.tenant_id not in blocked:
+                try:
+                    plan_limits.check_outbound(db, camp.tenant_id)
+                    blocked[camp.tenant_id] = False
+                except plan_limits.LimitReached:
+                    blocked[camp.tenant_id] = True
+            if blocked[camp.tenant_id]:
+                camp.status = "paused"
+                notifications.notify(db, camp.tenant_id, notifications.managers(db, camp.tenant_id), kind="campaign_paused",
+                                     title=f"Campaign \"{camp.name}\" paused: this month's call minutes are used up",
+                                     body="Start it again after upgrading or next month.", link="/outbound")
+                logger.info(f"[CAMPAIGN] Paused campaign {camp.id}: plan minutes used up")
+                continue
             leads = db.query(CampaignLead).filter(CampaignLead.campaign_id == camp.id)
 
             for stale in leads.filter(CampaignLead.status == "calling").all():

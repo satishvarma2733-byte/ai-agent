@@ -129,6 +129,11 @@ def _set_status(campaign_id: str, new_status: str, allowed_from: set[str], db: S
 
 @router.post("/{campaign_id}/start")
 def start_campaign(campaign_id: str, db: Session = Depends(get_db), current_user: User = Depends(RoleChecker(["Admin", "Manager"]))):
+    from app.services import plan_limits
+    try:
+        plan_limits.check_outbound(db, current_user.tenant_id)
+    except plan_limits.LimitReached as exc:
+        raise HTTPException(status_code=402, detail=str(exc))
     return _set_status(campaign_id, "running", {"queued", "paused"}, db, current_user)
 
 
