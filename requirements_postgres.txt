@@ -1,0 +1,2 @@
+# Superseded: everything is pinned in requirements.txt (kept so old build scripts still work).
+-r requirements.txt

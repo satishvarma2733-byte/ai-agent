@@ -1,0 +1,67 @@
+# Environment variables and secrets (examples stay tracked)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+!*credentials*.example.json
+*service-account*.json
+*service_account*.json
+
+# Local config and generated runtime files
+.DS_Store
+*.log
+config.json
+config.*backup*.json
+configs/*.json
+!configs/*.example.json
+google_creds.json
+data/whatsapp-auth/
+data/kb/
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Local databases, uploads, call audio, and CRM data (personal data; never commit)
+*.db
+*.db.bak*
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite3
+data/
+data/recordings/
+data/media/
+data/uploads/
+data/*.json
+data/dev-outbox/
+# Business documents used for the local knowledge base
+kb_documents/
+
+# Web UI build output and dependencies
+web/node_modules/
+web/dist/
+web/.env
+web/.env.local
+
+# Local tooling
+.claude/
+
+# One-off debugging scripts (contain environment-specific identifiers)
+scratch_*.py
+fix_dispatch.py

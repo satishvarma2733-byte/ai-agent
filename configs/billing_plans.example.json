@@ -1,0 +1,25 @@
+{
+  "_comment": "Copy to configs/billing_plans.json (or point BILLING_PLANS_FILE at it). Create each plan in Razorpay (Subscriptions > Plans) and each price in Stripe (Products), then paste their ids below. Charges come from Razorpay/Stripe; the amounts here are only what the Billing page shows, so keep them the same. Every value below is a placeholder.",
+  "plans": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "minutes_included": 500,
+      "features": ["1 AI agent", "500 call minutes a month", "Email support"],
+      "prices": {
+        "razorpay": {"plan_id": "plan_REPLACE_ME", "amount": 0, "currency": "INR"},
+        "stripe": {"price_id": "price_REPLACE_ME", "amount": 0, "currency": "USD"}
+      }
+    },
+    {
+      "id": "growth",
+      "name": "Growth",
+      "minutes_included": 2500,
+      "features": ["5 AI agents", "2,500 call minutes a month", "WhatsApp and calendar sync"],
+      "prices": {
+        "razorpay": {"plan_id": "plan_REPLACE_ME_TOO", "amount": 0, "currency": "INR"},
+        "stripe": {"price_id": "price_REPLACE_ME_TOO", "amount": 0, "currency": "USD"}
+      }
+    }
+  ]
+}
