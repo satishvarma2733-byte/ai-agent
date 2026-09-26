@@ -960,12 +960,16 @@ async def entrypoint(ctx: JobContext) -> None:
     routing = None
     try:
         from app.services.agent_runtime import resolve_for_call
-        routing = await asyncio.to_thread(resolve_for_call, called_number, job_meta.get("agent_id"))
+        routing = await asyncio.to_thread(resolve_for_call, called_number, job_meta.get("agent_id"),
+                                          job_meta.get("test_version"))
     except Exception as exc:
         logger.error("[ROUTING] Could not resolve the agent for this call: %s", exc)
     if routing:
         job_meta = {**job_meta, "tenant_id": job_meta.get("tenant_id") or routing["tenant_id"], "agent_id": routing["agent_id"]}
         logger.info("[ROUTING] %s handled by agent %s v%s", called_number or "dispatch", routing["agent_name"], routing["version"])
+
+    # A browser test from Agent Studio: a real conversation with a chosen version, but nothing it does counts.
+    is_test_call = bool(routing and job_meta.get("test_version"))
 
     if is_rate_limited(caller_phone):
         logger.warning("[RATE-LIMIT] Blocked %s", caller_phone)
@@ -1167,7 +1171,7 @@ async def entrypoint(ctx: JobContext) -> None:
         return all(str(os.environ.get(key, "")).strip() for key in required)
 
     egress_id = None
-    if _recording_configured():
+    if _recording_configured() and not is_test_call:
         try:
             rec_api = api.LiveKitAPI(
                 url=os.environ["LIVEKIT_URL"],
@@ -1384,6 +1388,10 @@ async def entrypoint(ctx: JobContext) -> None:
             await _flush_active_turn_metric(reason="call_ended")
         except Exception as exc:
             logger.warning("[CALL-LOG] Failed to flush final turn metric: %s", exc)
+        if is_test_call:
+            # No booking, call log, campaign update or workflow events for test conversations.
+            logger.info("[TEST] Test session %s ended; nothing saved", ctx.room.name)
+            return
 
         duration = int((datetime.now(timezone.utc) - call_start_time).total_seconds())
         booking_was_confirmed = False

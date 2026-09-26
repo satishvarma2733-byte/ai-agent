@@ -6,6 +6,9 @@ export type AgentVersion = Schema<'VersionOut'>
 export type AgentChange = Schema<'ChangeOut'>
 export type AgentLifecycleEvent = Schema<'LifecycleEventOut'>
 export type AgentNumber = Schema<'PhoneNumberOut'>
+export type AgentTestCase = Schema<'TestCaseOut'>
+export type AgentTestRun = Schema<'TestRunOut'>
+export type TestTurn = { role: 'caller' | 'agent'; text: string }
 export type VersionAction = 'submit' | 'evaluate' | 'approve' | 'reject' | 'activate' | 'rollback'
 
 export const agentsApi = {
@@ -28,4 +31,14 @@ export const agentsApi = {
   addNumber: (id: string, phoneNumber: string) => api.post<AgentNumber>(`/api/agents/${id}/numbers`, { phone_number: phoneNumber }),
   removeNumber: (id: string, numberId: string) => api.delete<void>(`/api/agents/${id}/numbers/${numberId}`),
   enable: (id: string) => api.post<Agent>(`/api/agents/${id}/enable`),
+  // Agent Studio
+  testChat: (id: string, number: number, turns: TestTurn[]) =>
+    api.post<{ reply: string }>(`/api/agents/${id}/versions/${number}/test/chat`, { turns }),
+  testCases: (id: string) => api.get<AgentTestCase[]>(`/api/agents/${id}/tests`),
+  addTestCase: (id: string, body: Schema<'TestCaseIn'>) => api.post<AgentTestCase>(`/api/agents/${id}/tests`, body),
+  deleteTestCase: (id: string, caseId: string) => api.delete<void>(`/api/agents/${id}/tests/${caseId}`),
+  runTests: (id: string, number: number) => api.post<AgentTestRun>(`/api/agents/${id}/versions/${number}/test/run`),
+  testRuns: (id: string, number: number) => api.get<AgentTestRun[]>(`/api/agents/${id}/versions/${number}/test/runs`),
+  voiceTest: (id: string, number: number) =>
+    api.post<{ url: string; token: string; room: string; version: number }>(`/api/agents/${id}/versions/${number}/test/voice`),
 }

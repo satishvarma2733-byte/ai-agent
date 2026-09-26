@@ -237,6 +237,11 @@ def transition(db: Session, agent: Agent, version: AgentVersion, action: str, us
         raise AgentError("This agent is disabled. Enable it before activating a version.")
     if action == "rollback" and version.activated_at is None:
         raise AgentError("Only versions that were in production before can be rolled back to.")
+    if action == "evaluate":
+        from app.services.agent_testing import evaluation_blocker
+        blocker = evaluation_blocker(db, agent, version)
+        if blocker:
+            raise AgentError(blocker)
 
     from_status = version.status
     now = utcnow()

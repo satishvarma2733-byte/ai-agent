@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { agentsApi } from '../../api/agents'
+import StudioTab from './StudioTab'
 import type { Agent, AgentChange, AgentVersion, VersionAction } from '../../api/agents'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -13,7 +14,7 @@ const STATUS_COLOR: Record<string, string> = {
 // Mirrors app/services/agents.py TRANSITIONS.
 const ACTIONS: Record<string, { action: VersionAction; label: string; admin: boolean; variant: 'primary' | 'ghost' | 'danger' }[]> = {
   draft:      [{ action: 'submit', label: 'Submit for testing', admin: false, variant: 'primary' }],
-  testing:    [{ action: 'evaluate', label: 'Mark tested', admin: false, variant: 'primary' },
+  testing:    [{ action: 'evaluate', label: 'Mark tested', admin: false, variant: 'primary' }, // needs a passing test run when the agent has tests
                { action: 'reject', label: 'Reject', admin: false, variant: 'ghost' }],
   evaluation: [{ action: 'approve', label: 'Approve', admin: true, variant: 'primary' },
                { action: 'reject', label: 'Reject', admin: false, variant: 'ghost' }],
@@ -53,7 +54,7 @@ export default function VersionsModal({ agent, onClose, onChanged }: {
   const role = localStorage.getItem('userRole') || ''
   const canBuild = (ROLE_RANK[role] ?? -1) >= ROLE_RANK.Manager
   const isAdmin = (ROLE_RANK[role] ?? -1) >= ROLE_RANK.Admin
-  const [tab, setTab] = useState<'versions' | 'changes'>('versions')
+  const [tab, setTab] = useState<'versions' | 'test' | 'changes'>('versions')
   const [versions, setVersions] = useState<AgentVersion[] | null>(null)
   const [changes, setChanges] = useState<AgentChange[] | null>(null)
   const [diff, setDiff] = useState<{ title: string; changes: { path: string; before?: unknown; after?: unknown }[] } | null>(null)
@@ -116,15 +117,18 @@ export default function VersionsModal({ agent, onClose, onChanged }: {
     <Modal open onClose={onClose} title={`${agent.name} — versions`} width={640}>
       <div style={{ padding: '16px 24px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div role="tablist" style={{ display: 'flex', gap: 4 }}>
-          {(['versions', 'changes'] as const).map(t => (
+          {(['versions', 'test', 'changes'] as const).map(t => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{
               padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
               background: tab === t ? 'rgba(123,97,255,0.18)' : 'transparent', color: tab === t ? '#9580FF' : 'var(--color-text-muted)',
-            }}>{t === 'versions' ? 'Versions' : 'Change log'}</button>
+            }}>{t === 'versions' ? 'Versions' : t === 'test' ? 'Test' : 'Change log'}</button>
           ))}
         </div>
 
-        {tab === 'versions' ? (
+        {tab === 'test' ? (
+          versions === null ? <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Loading…</div>
+            : <StudioTab agent={agent} versions={versions} canBuild={canBuild} />
+        ) : tab === 'versions' ? (
           versions === null ? <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Loading…</div> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {versions.map(v => {

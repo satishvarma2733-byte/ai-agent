@@ -15,3 +15,4 @@ from app.models.notification import Notification  # noqa: F401
 from app.models.calendar import AppointmentCalendarEvent, CalendarConnection  # noqa: F401
 from app.models.whatsapp import WhatsAppAccount, WhatsAppMessage  # noqa: F401
 from app.models.billing import BillingEvent, BillingInvoice, BillingSubscription  # noqa: F401
+from app.models.agent_test import AgentTestCase, AgentTestRun  # noqa: F401

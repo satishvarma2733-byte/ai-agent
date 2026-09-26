@@ -318,3 +318,158 @@ def remove_number(agent_id: str, number_id: str, request: Request, db: Session =
     db.commit()
     audit.record(db, action="agent_number_removed", entity="Agent", entity_id=agent.id, tenant_id=current_user.tenant_id,
                  user_id=current_user.id, details={"phone_number": number}, request=request)
+
+
+# ── Agent Studio: test a version by text or voice, and its regression tests ─────────
+
+class TestTurnIn(BaseModel):
+    role: str  # caller | agent
+    text: str
+
+
+class TestChatIn(BaseModel):
+    turns: List[TestTurnIn]
+
+
+class TestChatOut(BaseModel):
+    reply: str
+
+
+class TestCaseIn(BaseModel):
+    name: str
+    caller_turns: List[str]
+    must_include: List[str] = []
+    must_not_include: List[str] = []
+
+
+class TestCaseOut(TestCaseIn):
+    id: str
+    created_at: UTCDateTime
+
+    class Config:
+        from_attributes = True
+
+
+class TestRunOut(BaseModel):
+    id: str
+    version_number: int
+    passed: int
+    total: int
+    results: list
+    created_at: UTCDateTime
+
+
+class VoiceTestOut(BaseModel):
+    url: str
+    token: str
+    room: str
+    version: int
+
+
+def _studio_error(exc) -> None:
+    raise HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
+def _clean_list(items: List[str], limit: int, what: str) -> list[str]:
+    cleaned = [i.strip() for i in items if i and i.strip()]
+    if len(cleaned) > limit or any(len(i) > 500 for i in cleaned):
+        raise HTTPException(status_code=422, detail=f"Use at most {limit} {what}, each under 500 characters.")
+    return cleaned
+
+
+@router.get("/{agent_id}/tests", response_model=List[TestCaseOut])
+def list_test_cases(agent_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models.agent_test import AgentTestCase
+    agent = _get_agent(db, agent_id, current_user)
+    return db.query(AgentTestCase).filter(AgentTestCase.agent_id == agent.id).order_by(AgentTestCase.created_at).all()
+
+
+@router.post("/{agent_id}/tests", response_model=TestCaseOut, status_code=status.HTTP_201_CREATED)
+def create_test_case(agent_id: str, payload: TestCaseIn, db: Session = Depends(get_db),
+                     current_user: User = Depends(require_builder)):
+    """A scripted conversation this agent must pass before a version can go to evaluation."""
+    from datetime import datetime, timezone
+
+    from app.models.agent_test import AgentTestCase
+    agent = _get_agent(db, agent_id, current_user)
+    turns = _clean_list(payload.caller_turns, 10, "caller messages")
+    if not payload.name.strip() or not turns:
+        raise HTTPException(status_code=422, detail="Give the test a name and at least one thing the caller says.")
+    must, must_not = _clean_list(payload.must_include, 10, "required phrases"), _clean_list(payload.must_not_include, 10, "forbidden phrases")
+    if not must and not must_not:
+        raise HTTPException(status_code=422, detail="Add at least one phrase the replies must or must not contain.")
+    case = AgentTestCase(tenant_id=agent.tenant_id, agent_id=agent.id, name=payload.name.strip()[:150], caller_turns=turns,
+                         must_include=must, must_not_include=must_not, created_by=current_user.id,
+                         created_at=datetime.now(timezone.utc).replace(tzinfo=None))
+    db.add(case)
+    db.commit()
+    db.refresh(case)
+    return case
+
+
+@router.delete("/{agent_id}/tests/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_test_case(agent_id: str, case_id: str, db: Session = Depends(get_db), current_user: User = Depends(require_builder)):
+    from app.models.agent_test import AgentTestCase
+    agent = _get_agent(db, agent_id, current_user)
+    deleted = db.query(AgentTestCase).filter(AgentTestCase.id == case_id, AgentTestCase.agent_id == agent.id).delete()
+    db.commit()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Test case not found")
+
+
+@router.post("/{agent_id}/versions/{number}/test/chat", response_model=TestChatOut)
+def test_chat(agent_id: str, number: int, payload: TestChatIn, db: Session = Depends(get_db),
+              current_user: User = Depends(require_builder)):
+    """The version's next reply to a typed conversation. Nothing is saved or sent to anyone."""
+    from app.core.runtime_config import load_runtime_config
+    from app.services import agent_testing
+    agent = _get_agent(db, agent_id, current_user)
+    version = _get_version(db, agent, number)
+    try:
+        return TestChatOut(reply=agent_testing.reply(version, agent.tenant_id, [t.model_dump() for t in payload.turns],
+                                                     load_runtime_config()))
+    except agent_testing.AgentTestError as exc:
+        _studio_error(exc)
+
+
+@router.post("/{agent_id}/versions/{number}/test/run", response_model=TestRunOut)
+def run_version_tests(agent_id: str, number: int, request: Request, db: Session = Depends(get_db),
+                      current_user: User = Depends(require_builder)):
+    """Run every test case against this version and record the result."""
+    from app.core.runtime_config import load_runtime_config
+    from app.services import agent_testing
+    agent = _get_agent(db, agent_id, current_user)
+    version = _get_version(db, agent, number)
+    try:
+        run = agent_testing.run_tests(db, agent, version, current_user.id, load_runtime_config())
+    except agent_testing.AgentTestError as exc:
+        _studio_error(exc)
+    audit.record(db, action="agent_tests_run", entity="Agent", entity_id=agent.id, tenant_id=agent.tenant_id,
+                 user_id=current_user.id, details={"version": number, "passed": run.passed, "total": run.total}, request=request)
+    return TestRunOut(id=run.id, version_number=number, passed=run.passed, total=run.total, results=run.results,
+                      created_at=run.created_at)
+
+
+@router.get("/{agent_id}/versions/{number}/test/runs", response_model=List[TestRunOut])
+def list_version_test_runs(agent_id: str, number: int, db: Session = Depends(get_db),
+                           current_user: User = Depends(get_current_user)):
+    from app.models.agent_test import AgentTestRun
+    agent = _get_agent(db, agent_id, current_user)
+    version = _get_version(db, agent, number)
+    runs = db.query(AgentTestRun).filter(AgentTestRun.version_id == version.id).order_by(AgentTestRun.created_at.desc()).limit(10).all()
+    return [TestRunOut(id=r.id, version_number=number, passed=r.passed, total=r.total, results=r.results, created_at=r.created_at)
+            for r in runs]
+
+
+@router.post("/{agent_id}/versions/{number}/test/voice", response_model=VoiceTestOut)
+async def voice_test(agent_id: str, number: int, db: Session = Depends(get_db), current_user: User = Depends(require_builder)):
+    """Talk to this version through the browser microphone in a sandbox room; no phone is dialled."""
+    from app.core.runtime_config import load_runtime_config
+    from app.services import agent_testing
+    agent = _get_agent(db, agent_id, current_user)
+    version = _get_version(db, agent, number)
+    try:
+        return await agent_testing.start_voice_test(agent, version, current_user.id, current_user.name or current_user.email,
+                                                    load_runtime_config())
+    except agent_testing.AgentTestError as exc:
+        _studio_error(exc)

@@ -50,9 +50,11 @@ def runtime_overrides(config: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in overrides.items() if v not in (None, "")}
 
 
-def resolve_for_call(called_number: str | None = None, agent_id: str | None = None) -> dict[str, Any] | None:
+def resolve_for_call(called_number: str | None = None, agent_id: str | None = None,
+                     version_number: int | None = None) -> dict[str, Any] | None:
     """{"tenant_id", "agent_id", "agent_name", "version", "overrides"} for the agent handling this call,
-    or None when the call isn't routed to a specific agent (or the agent can't take calls)."""
+    or None when the call isn't routed to a specific agent (or the agent can't take calls).
+    `version_number` (browser test sessions only, dispatched by the API) runs that version instead of production."""
     db = SessionLocal()
     try:
         agent = None
@@ -64,6 +66,15 @@ def resolve_for_call(called_number: str | None = None, agent_id: str | None = No
             agent = db.query(Agent).filter(Agent.id == row.agent_id).first() if row else None
         if agent is None:
             return None
+        if version_number is not None and agent_id:
+            version = db.query(AgentVersion).filter(AgentVersion.agent_id == agent.id,
+                                                    AgentVersion.number == int(version_number)).first()
+            if version is None:
+                return None
+            return {
+                "tenant_id": agent.tenant_id, "agent_id": agent.id, "agent_name": agent.name,
+                "version": version.number, "overrides": runtime_overrides(version.config or {}),
+            }
         if agent.disabled_at is not None:
             logger.warning("[ROUTING] Agent %s is disabled; using the default configuration", agent.id)
             return None

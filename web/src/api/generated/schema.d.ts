@@ -191,6 +191,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/agents/{agent_id}/tests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Test Cases */
+        get: operations["list_test_cases_api_agents__agent_id__tests_get"];
+        put?: never;
+        /**
+         * Create Test Case
+         * @description A scripted conversation this agent must pass before a version can go to evaluation.
+         */
+        post: operations["create_test_case_api_agents__agent_id__tests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/tests/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Test Case */
+        delete: operations["delete_test_case_api_agents__agent_id__tests__case_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/agents/{agent_id}/versions": {
         parameters: {
             query?: never;
@@ -219,6 +257,83 @@ export interface paths {
         get: operations["get_version_api_agents__agent_id__versions__number__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/versions/{number}/test/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Chat
+         * @description The version's next reply to a typed conversation. Nothing is saved or sent to anyone.
+         */
+        post: operations["test_chat_api_agents__agent_id__versions__number__test_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/versions/{number}/test/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Version Tests
+         * @description Run every test case against this version and record the result.
+         */
+        post: operations["run_version_tests_api_agents__agent_id__versions__number__test_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/versions/{number}/test/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Version Test Runs */
+        get: operations["list_version_test_runs_api_agents__agent_id__versions__number__test_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/versions/{number}/test/voice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Test
+         * @description Talk to this version through the browser microphone in a sandbox room; no phone is dialled.
+         */
+        post: operations["voice_test_api_agents__agent_id__versions__number__test_voice_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3679,6 +3794,82 @@ export interface components {
             /** Params */
             params?: string[];
         };
+        /** TestCaseIn */
+        TestCaseIn: {
+            /** Caller Turns */
+            caller_turns: string[];
+            /**
+             * Must Include
+             * @default []
+             */
+            must_include: string[];
+            /**
+             * Must Not Include
+             * @default []
+             */
+            must_not_include: string[];
+            /** Name */
+            name: string;
+        };
+        /** TestCaseOut */
+        TestCaseOut: {
+            /** Caller Turns */
+            caller_turns: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /**
+             * Must Include
+             * @default []
+             */
+            must_include: string[];
+            /**
+             * Must Not Include
+             * @default []
+             */
+            must_not_include: string[];
+            /** Name */
+            name: string;
+        };
+        /** TestChatIn */
+        TestChatIn: {
+            /** Turns */
+            turns: components["schemas"]["TestTurnIn"][];
+        };
+        /** TestChatOut */
+        TestChatOut: {
+            /** Reply */
+            reply: string;
+        };
+        /** TestRunOut */
+        TestRunOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Passed */
+            passed: number;
+            /** Results */
+            results: unknown[];
+            /** Total */
+            total: number;
+            /** Version Number */
+            version_number: number;
+        };
+        /** TestTurnIn */
+        TestTurnIn: {
+            /** Role */
+            role: string;
+            /** Text */
+            text: string;
+        };
         /** TokenIn */
         TokenIn: {
             /** Token */
@@ -3852,6 +4043,17 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** VoiceTestOut */
+        VoiceTestOut: {
+            /** Room */
+            room: string;
+            /** Token */
+            token: string;
+            /** Url */
+            url: string;
+            /** Version */
+            version: number;
         };
         /** WebhookCreatedOut */
         WebhookCreatedOut: {
@@ -4511,6 +4713,102 @@ export interface operations {
             };
         };
     };
+    list_test_cases_api_agents__agent_id__tests_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestCaseOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_test_case_api_agents__agent_id__tests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestCaseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestCaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_test_case_api_agents__agent_id__tests__case_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_versions_api_agents__agent_id__versions_get: {
         parameters: {
             query?: never;
@@ -4561,6 +4859,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_chat_api_agents__agent_id__versions__number__test_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestChatOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_version_tests_api_agents__agent_id__versions__number__test_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_version_test_runs_api_agents__agent_id__versions__number__test_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_test_api_agents__agent_id__versions__number__test_voice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceTestOut"];
                 };
             };
             /** @description Validation Error */

@@ -4343,6 +4343,178 @@
         "title": "TemplateIn",
         "type": "object"
       },
+      "TestCaseIn": {
+        "properties": {
+          "caller_turns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Turns",
+            "type": "array"
+          },
+          "must_include": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Must Include",
+            "type": "array"
+          },
+          "must_not_include": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Must Not Include",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "caller_turns"
+        ],
+        "title": "TestCaseIn",
+        "type": "object"
+      },
+      "TestCaseOut": {
+        "properties": {
+          "caller_turns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Turns",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "must_include": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Must Include",
+            "type": "array"
+          },
+          "must_not_include": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Must Not Include",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "caller_turns",
+          "id",
+          "created_at"
+        ],
+        "title": "TestCaseOut",
+        "type": "object"
+      },
+      "TestChatIn": {
+        "properties": {
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/TestTurnIn"
+            },
+            "title": "Turns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "turns"
+        ],
+        "title": "TestChatIn",
+        "type": "object"
+      },
+      "TestChatOut": {
+        "properties": {
+          "reply": {
+            "title": "Reply",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reply"
+        ],
+        "title": "TestChatOut",
+        "type": "object"
+      },
+      "TestRunOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "results": {
+            "items": {},
+            "title": "Results",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version_number",
+          "passed",
+          "total",
+          "results",
+          "created_at"
+        ],
+        "title": "TestRunOut",
+        "type": "object"
+      },
+      "TestTurnIn": {
+        "properties": {
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "text"
+        ],
+        "title": "TestTurnIn",
+        "type": "object"
+      },
       "TokenIn": {
         "properties": {
           "token": {
@@ -4810,6 +4982,34 @@
           "updated_at"
         ],
         "title": "VersionOut",
+        "type": "object"
+      },
+      "VoiceTestOut": {
+        "properties": {
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "url",
+          "token",
+          "room",
+          "version"
+        ],
+        "title": "VoiceTestOut",
         "type": "object"
       },
       "WebhookCreatedOut": {
@@ -6154,6 +6354,162 @@
         ]
       }
     },
+    "/api/agents/{agent_id}/tests": {
+      "get": {
+        "operationId": "list_test_cases_api_agents__agent_id__tests_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TestCaseOut"
+                  },
+                  "title": "Response List Test Cases Api Agents  Agent Id  Tests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Test Cases",
+        "tags": [
+          "Agents"
+        ]
+      },
+      "post": {
+        "description": "A scripted conversation this agent must pass before a version can go to evaluation.",
+        "operationId": "create_test_case_api_agents__agent_id__tests_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestCaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestCaseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Test Case",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/tests/{case_id}": {
+      "delete": {
+        "operationId": "delete_test_case_api_agents__agent_id__tests__case_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Test Case",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
     "/api/agents/{agent_id}/versions": {
       "get": {
         "operationId": "list_versions_api_agents__agent_id__versions_get",
@@ -6256,6 +6612,247 @@
           }
         ],
         "summary": "Get Version",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/versions/{number}/test/chat": {
+      "post": {
+        "description": "The version's next reply to a typed conversation. Nothing is saved or sent to anyone.",
+        "operationId": "test_chat_api_agents__agent_id__versions__number__test_chat_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestChatOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Test Chat",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/versions/{number}/test/run": {
+      "post": {
+        "description": "Run every test case against this version and record the result.",
+        "operationId": "run_version_tests_api_agents__agent_id__versions__number__test_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Run Version Tests",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/versions/{number}/test/runs": {
+      "get": {
+        "operationId": "list_version_test_runs_api_agents__agent_id__versions__number__test_runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TestRunOut"
+                  },
+                  "title": "Response List Version Test Runs Api Agents  Agent Id  Versions  Number  Test Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Version Test Runs",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/versions/{number}/test/voice": {
+      "post": {
+        "description": "Talk to this version through the browser microphone in a sandbox room; no phone is dialled.",
+        "operationId": "voice_test_api_agents__agent_id__versions__number__test_voice_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceTestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Voice Test",
         "tags": [
           "Agents"
         ]
