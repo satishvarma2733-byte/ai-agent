@@ -3,6 +3,7 @@ import { Shield, Monitor, Building2, Check, Minus, LogOut, ListPlus, Plug } from
 import IntegrationsTab from '../components/settings/IntegrationsTab'
 import WhatsAppCard from '../components/settings/WhatsAppCard'
 import CallSummaryCard from '../components/settings/CallSummaryCard'
+import SmsCard from '../components/settings/SmsCard'
 import LeadFieldsTab from '../components/settings/LeadFieldsTab'
 import toast from 'react-hot-toast'
 import Card from '../components/ui/Card'
@@ -236,6 +237,7 @@ export default function Settings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <IntegrationsTab canEdit={canEditWorkspace} />
             {canEditWorkspace && <WhatsAppCard />}
+            {canEditWorkspace && <SmsCard />}
           </div>
         )}
         {activeTab === 'sessions' && <SessionsTab />}

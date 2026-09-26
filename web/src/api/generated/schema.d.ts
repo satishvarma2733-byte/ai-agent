@@ -1308,6 +1308,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/crm/sms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Sms */
+        post: operations["send_sms_api_crm_sms_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/crm/whatsapp": {
         parameters: {
             query?: never;
@@ -1571,6 +1588,66 @@ export interface paths {
          */
         post: operations["sync_calendar_api_integrations_calendar__provider__sync_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/ical-feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ical Feed Status */
+        get: operations["ical_feed_status_api_integrations_ical_feed_get"];
+        put?: never;
+        post?: never;
+        /** Delete Ical Feed */
+        delete: operations["delete_ical_feed_api_integrations_ical_feed_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/ical-feed/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate Ical Feed
+         * @description Turn the feed on, or replace its URL: anyone subscribed to the old URL stops receiving updates.
+         */
+        post: operations["rotate_ical_feed_api_integrations_ical_feed_rotate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/sms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sms Status */
+        get: operations["sms_status_api_integrations_sms_get"];
+        /**
+         * Connect Sms
+         * @description Check the Twilio details, then store them encrypted. Replaces any existing SMS sender.
+         */
+        put: operations["connect_sms_api_integrations_sms_put"];
+        post?: never;
+        /** Disconnect Sms */
+        delete: operations["disconnect_sms_api_integrations_sms_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3159,6 +3236,17 @@ export interface components {
             /** Hour */
             hour: number;
         };
+        /** IcalFeedOut */
+        IcalFeedOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Last Fetched At */
+            last_fetched_at?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Webcal Url */
+            webcal_url?: string | null;
+        };
         /** InvitationCreate */
         InvitationCreate: {
             /**
@@ -3757,6 +3845,40 @@ export interface components {
              * @default accepted
              */
             status: string;
+        };
+        /** SmsConnectIn */
+        SmsConnectIn: {
+            /** Account Sid */
+            account_sid: string;
+            /** Auth Token */
+            auth_token: string;
+            /** From Number */
+            from_number: string;
+        };
+        /** SmsSendIn */
+        SmsSendIn: {
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Text */
+            text: string;
+        };
+        /** SmsSentOut */
+        SmsSentOut: {
+            /** Sid */
+            sid: string;
+            /** Status */
+            status: string;
+        };
+        /** SmsStatusOut */
+        SmsStatusOut: {
+            /** Connected */
+            connected: boolean;
+            /** Provider */
+            provider?: string | null;
+            /** Sender */
+            sender?: string | null;
         };
         /** SubscriptionOut */
         SubscriptionOut: {
@@ -6819,6 +6941,39 @@ export interface operations {
             };
         };
     };
+    send_sms_api_crm_sms_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmsSendIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsSentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_whatsapp_api_crm_whatsapp_post: {
         parameters: {
             query?: never;
@@ -7270,6 +7425,135 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    ical_feed_status_api_integrations_ical_feed_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcalFeedOut"];
+                };
+            };
+        };
+    };
+    delete_ical_feed_api_integrations_ical_feed_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rotate_ical_feed_api_integrations_ical_feed_rotate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcalFeedOut"];
+                };
+            };
+        };
+    };
+    sms_status_api_integrations_sms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsStatusOut"];
+                };
+            };
+        };
+    };
+    connect_sms_api_integrations_sms_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmsConnectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_sms_api_integrations_sms_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

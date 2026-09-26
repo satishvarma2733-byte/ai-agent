@@ -3,6 +3,7 @@ import type { Schema } from './types'
 
 export type CalendarStatus = Schema<'CalendarStatusOut'>
 export type CalendarProvider = 'google' | 'zoho'
+export type IcalFeed = Schema<'IcalFeedOut'>
 
 export const calendarApi = {
   status: () => api.get<CalendarStatus[]>('/api/integrations/calendar'),
@@ -10,4 +11,7 @@ export const calendarApi = {
   connect: (provider: CalendarProvider) => api.post<Schema<'ConnectOut'>>(`/api/integrations/calendar/${provider}/connect`),
   sync: (provider: CalendarProvider) => api.post<Schema<'SyncOut'>>(`/api/integrations/calendar/${provider}/sync`),
   disconnect: (provider: CalendarProvider) => api.delete<void>(`/api/integrations/calendar/${provider}`),
+  icalFeed: () => api.get<IcalFeed>('/api/integrations/ical-feed'),
+  rotateIcalFeed: () => api.post<IcalFeed>('/api/integrations/ical-feed/rotate'),
+  deleteIcalFeed: () => api.delete<void>('/api/integrations/ical-feed'),
 }

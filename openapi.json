@@ -2360,6 +2360,53 @@
         "title": "HeatCell",
         "type": "object"
       },
+      "IcalFeedOut": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "last_fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Fetched At"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "webcal_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Webcal Url"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "IcalFeedOut",
+        "type": "object"
+      },
       "InvitationCreate": {
         "properties": {
           "email": {
@@ -4237,6 +4284,119 @@
           }
         },
         "title": "SignupAcceptedOut",
+        "type": "object"
+      },
+      "SmsConnectIn": {
+        "properties": {
+          "account_sid": {
+            "title": "Account Sid",
+            "type": "string"
+          },
+          "auth_token": {
+            "title": "Auth Token",
+            "type": "string"
+          },
+          "from_number": {
+            "title": "From Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_sid",
+          "auth_token",
+          "from_number"
+        ],
+        "title": "SmsConnectIn",
+        "type": "object"
+      },
+      "SmsSendIn": {
+        "properties": {
+          "lead_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Id"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SmsSendIn",
+        "type": "object"
+      },
+      "SmsSentOut": {
+        "properties": {
+          "sid": {
+            "title": "Sid",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "sid"
+        ],
+        "title": "SmsSentOut",
+        "type": "object"
+      },
+      "SmsStatusOut": {
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          }
+        },
+        "required": [
+          "connected"
+        ],
+        "title": "SmsStatusOut",
         "type": "object"
       },
       "SubscriptionOut": {
@@ -9572,6 +9732,52 @@
         ]
       }
     },
+    "/api/crm/sms": {
+      "post": {
+        "operationId": "send_sms_api_crm_sms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsSendIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsSentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Send Sms",
+        "tags": [
+          "SMS"
+        ]
+      }
+    },
     "/api/crm/whatsapp": {
       "post": {
         "description": "Send free text (within 24 hours of the customer's last message) or an approved template to a lead or number.",
@@ -10233,6 +10439,164 @@
         "summary": "Sync Calendar",
         "tags": [
           "Calendar sync"
+        ]
+      }
+    },
+    "/api/integrations/ical-feed": {
+      "delete": {
+        "operationId": "delete_ical_feed_api_integrations_ical_feed_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Ical Feed",
+        "tags": [
+          "Calendar sync"
+        ]
+      },
+      "get": {
+        "operationId": "ical_feed_status_api_integrations_ical_feed_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IcalFeedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Ical Feed Status",
+        "tags": [
+          "Calendar sync"
+        ]
+      }
+    },
+    "/api/integrations/ical-feed/rotate": {
+      "post": {
+        "description": "Turn the feed on, or replace its URL: anyone subscribed to the old URL stops receiving updates.",
+        "operationId": "rotate_ical_feed_api_integrations_ical_feed_rotate_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IcalFeedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Rotate Ical Feed",
+        "tags": [
+          "Calendar sync"
+        ]
+      }
+    },
+    "/api/integrations/sms": {
+      "delete": {
+        "operationId": "disconnect_sms_api_integrations_sms_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Disconnect Sms",
+        "tags": [
+          "SMS"
+        ]
+      },
+      "get": {
+        "operationId": "sms_status_api_integrations_sms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Sms Status",
+        "tags": [
+          "SMS"
+        ]
+      },
+      "put": {
+        "description": "Check the Twilio details, then store them encrypted. Replaces any existing SMS sender.",
+        "operationId": "connect_sms_api_integrations_sms_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsConnectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Connect Sms",
+        "tags": [
+          "SMS"
         ]
       }
     },

@@ -3,7 +3,7 @@ import {
   GitBranch, Plus, Play, Pause, Settings2, CheckCircle2, AlertCircle,
   Zap, Mail, Users, Clock, RefreshCw,
   ChevronRight, Eye, Activity, ArrowRight, X, Copy,
-  CalendarCheck, Bell, Database, Code, GitMerge, PhoneCall, PhoneMissed, MessageCircle, CalendarClock,
+  CalendarCheck, Bell, Database, Code, GitMerge, PhoneCall, PhoneMissed, MessageCircle, CalendarClock, MessageSquare,
 } from 'lucide-react'
 import Card from '../components/ui/Card'
 import GradientStatCard from '../components/ui/GradientStatCard'
@@ -29,6 +29,7 @@ const TRIGGER_NODES = [
 const ACTION_NODES = [
   { type: 'ai_call', label: 'AI Voice Call', icon: Zap, color: '#7B61FF', desc: 'Call the lead with the AI agent' },
   { type: 'send_email', label: 'Send Email', icon: Mail, color: '#5EE6FF', desc: 'Email the lead (needs an email address)' },
+  { type: 'send_sms', label: 'Send SMS', icon: MessageSquare, color: '#5EE6FF', desc: 'Text the lead (Settings → Integrations → SMS)' },
   { type: 'send_whatsapp', label: 'Send WhatsApp', icon: MessageCircle, color: '#22D3A5', desc: 'Message or approved template (Settings → Integrations)' },
   { type: 'update_crm', label: 'Update CRM', icon: Database, color: '#9580FF', desc: 'Set a field on the lead' },
   { type: 'assign_lead', label: 'Assign Lead', icon: Users, color: '#F5A623', desc: 'Assign to a team member' },
@@ -68,6 +69,9 @@ const CONFIG_FIELDS: Record<string, ConfigField[]> = {
   send_email: [
     { key: 'subject', label: 'Subject', placeholder: 'Following up on your enquiry' },
     { key: 'body', label: 'Message', placeholder: 'Hi, thank you for your interest…', multiline: true },
+  ],
+  send_sms: [
+    { key: 'message', label: 'Text message', placeholder: 'Hi {{lead.first_name}}, reminder: {{appointment.time}} at {{workspace.name}}', multiline: true },
   ],
   send_whatsapp: [
     { key: 'message', label: 'Message (within 24 h of their last message)', placeholder: 'Hi {{lead.first_name}}, thanks for calling {{workspace.name}}', multiline: true },

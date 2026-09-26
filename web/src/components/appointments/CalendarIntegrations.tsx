@@ -6,6 +6,7 @@ import Card from '../ui/Card'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import { calendarApi, type CalendarProvider, type CalendarStatus } from '../../api/calendar'
+import IcalFeedSection from './IcalFeedSection'
 
 const ROLE_RANK: Record<string, number> = { Viewer: 0, Agent: 1, Manager: 2, Admin: 3, Owner: 4 }
 
@@ -125,6 +126,7 @@ export default function CalendarIntegrations({ onChanged }: { onChanged?: () => 
           </div>
         )
       })}
+      {isAdmin && <IcalFeedSection />}
     </Card>
   )
 }

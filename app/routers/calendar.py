@@ -153,3 +153,93 @@ def disconnect_calendar(provider: str, request: Request, db: Session = Depends(g
     calendar_sync.disconnect(db, conn)
     audit.record(db, action="calendar_disconnected", entity="CalendarConnection", entity_id=conn_id,
                  tenant_id=current_user.tenant_id, user_id=current_user.id, details={"provider": provider}, request=request)
+
+
+# ── iCalendar feed (Apple Calendar, Outlook, any calendar app that subscribes to a URL) ─────────
+
+# Its own paths: under /api/integrations/calendar, "/ical" would be taken for a provider name.
+ical_router = APIRouter(tags=["Calendar sync"])
+
+
+class IcalFeedOut(BaseModel):
+    enabled: bool
+    url: Optional[str] = None
+    webcal_url: Optional[str] = None
+    last_fetched_at: Optional[UTCDateTime] = None
+
+
+def _feed_out(feed, request: Request) -> IcalFeedOut:
+    if feed is None:
+        return IcalFeedOut(enabled=False)
+    token = config_crypto.decrypt(feed.token)
+    base = (settings.public_api_url or _request_base(request)).rstrip("/")
+    url = f"{base}/api/ical/{token}.ics"
+    return IcalFeedOut(enabled=True, url=url, webcal_url="webcal://" + url.split("://", 1)[1],
+                       last_fetched_at=feed.last_fetched_at.replace(tzinfo=timezone.utc) if feed.last_fetched_at else None)
+
+
+@ical_router.get("/api/integrations/ical-feed", response_model=IcalFeedOut)
+def ical_feed_status(request: Request, db: Session = Depends(get_db), current_user: User = Depends(RoleChecker(["Admin"]))):
+    from app.models.sms import CalendarFeed
+    return _feed_out(db.query(CalendarFeed).filter(CalendarFeed.tenant_id == current_user.tenant_id).first(), request)
+
+
+@ical_router.post("/api/integrations/ical-feed/rotate", response_model=IcalFeedOut)
+def rotate_ical_feed(request: Request, db: Session = Depends(get_db), current_user: User = Depends(RoleChecker(["Admin"]))):
+    """Turn the feed on, or replace its URL: anyone subscribed to the old URL stops receiving updates."""
+    from datetime import datetime
+
+    from app.core.security import hash_token, new_opaque_token
+    from app.models.sms import CalendarFeed
+    token = new_opaque_token()
+    feed = db.query(CalendarFeed).filter(CalendarFeed.tenant_id == current_user.tenant_id).first()
+    if feed is None:
+        feed = CalendarFeed(tenant_id=current_user.tenant_id, created_at=datetime.now(timezone.utc).replace(tzinfo=None))
+        db.add(feed)
+    feed.token_hash = hash_token(token)
+    feed.token = config_crypto.encrypt(token) if config_crypto.encryption_available() else token
+    feed.last_fetched_at = None
+    db.commit()
+    audit.record(db, action="ical_feed_rotated", entity="CalendarFeed", entity_id=feed.id, tenant_id=current_user.tenant_id,
+                 user_id=current_user.id, request=request)
+    return _feed_out(feed, request)
+
+
+@ical_router.delete("/api/integrations/ical-feed", status_code=204)
+def delete_ical_feed(request: Request, db: Session = Depends(get_db), current_user: User = Depends(RoleChecker(["Admin"]))):
+    from app.models.sms import CalendarFeed
+    db.query(CalendarFeed).filter(CalendarFeed.tenant_id == current_user.tenant_id).delete()
+    db.commit()
+    audit.record(db, action="ical_feed_deleted", entity="CalendarFeed", tenant_id=current_user.tenant_id,
+                 user_id=current_user.id, request=request)
+
+
+ICAL_FETCHES_PER_MINUTE = 30
+
+
+@ical_router.get("/api/ical/{token}.ics", include_in_schema=False)
+def ical_feed(token: str, db: Session = Depends(get_db)):
+    """Public, by secret URL: the workspace's appointments from 30 days ago to a year ahead."""
+    from datetime import datetime
+
+    from fastapi.responses import Response
+
+    from app.core import ratelimit
+    from app.core.security import hash_token
+    from app.models.sms import CalendarFeed
+    from app.models.tenant import Tenant
+    from app.services import ical_feed as ical
+    feed = db.query(CalendarFeed).filter(CalendarFeed.token_hash == hash_token(token)).first()
+    if feed is None:
+        raise HTTPException(status_code=404, detail="Not Found")
+    key = f"ical:{feed.id}"
+    if ratelimit.is_limited(key, ICAL_FETCHES_PER_MINUTE, 60):
+        raise HTTPException(status_code=429, detail="Too many requests")
+    ratelimit.hit(key, 60)
+    bind_session_to_tenant(db, feed.tenant_id)
+    tenant = db.get(Tenant, feed.tenant_id)
+    body = ical.render(db, feed.tenant_id, tenant.name if tenant else "aVn")
+    feed.last_fetched_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    return Response(content=body, media_type="text/calendar; charset=utf-8",
+                    headers={"Cache-Control": "private, max-age=300", "Content-Disposition": 'inline; filename="appointments.ics"'})

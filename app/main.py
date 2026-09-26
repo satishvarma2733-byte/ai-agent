@@ -25,7 +25,7 @@ from app.models.campaign import Campaign, CampaignLead
 from app.routers import (
     auth, leads, calls, appointments,
     cms, workflows, analytics, agents,
-    kb, inbound, contacts, campaigns, system, team, workspace, lead_fields, webhooks, notifications, calendar, whatsapp, billing
+    kb, inbound, contacts, campaigns, system, team, workspace, lead_fields, webhooks, notifications, calendar, whatsapp, billing, sms
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -122,6 +122,8 @@ app.include_router(notifications.router)
 app.include_router(calendar.router)
 app.include_router(whatsapp.router)
 app.include_router(billing.router)
+app.include_router(calendar.ical_router)
+app.include_router(sms.router)
 
 # Uploaded CMS media. Only well-formed stored names of allowed passive types are served, with a fixed
 # content type and a sandbox CSP (see app/services/media_files.py); everything else is 404.

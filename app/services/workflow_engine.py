@@ -22,7 +22,7 @@ CREATES_LEAD = ("call_missed",)
 POLL_SECONDS = 2
 # Names saved by earlier builder versions.
 LEGACY_TRIGGERS = {"new_lead": "lead_created", "pipeline_change": "lead_status_changed", "status_changed": "lead_status_changed"}
-ACTIONS = ("ai_call", "send_email", "send_whatsapp", "update_crm", "assign_lead", "create_reminder", "delay", "call_webhook")
+ACTIONS = ("ai_call", "send_email", "send_whatsapp", "send_sms", "update_crm", "assign_lead", "create_reminder", "delay", "call_webhook")
 MAX_DELAY_SECONDS = 3600
 # Lead fields a workflow may set; everything else (tenant, ids, timestamps) is off limits.
 UPDATABLE_FIELDS = {"status", "score", "assigned_agent", "follow_up_date", "notes", "objection"}
@@ -184,6 +184,17 @@ class WorkflowEngine:
                 # A failed step fails the run, so managers are notified.
                 raise RuntimeError(f"WhatsApp to {lead.phone} not sent: {exc}") from exc
             return f"WhatsApp {'template ' + name if template else 'message'} sent to {lead.phone}"
+
+        if act_type == "send_sms":
+            from app.services import sms
+            text = render(str(config.get("message") or ""), lead, _workspace_name(db, tenant_id), appointment).strip()
+            if not text:
+                return "SMS skipped: no message configured"
+            try:
+                sms.send(db, tenant_id, lead.phone, text, lead=lead, source="workflow")
+            except (sms.SmsNotConnected, sms.SmsError) as exc:
+                raise RuntimeError(f"SMS to {lead.phone} not sent: {exc}") from exc
+            return f"SMS sent to {lead.phone}"
 
         if act_type == "update_crm":
             field, value = config.get("field"), config.get("value")
