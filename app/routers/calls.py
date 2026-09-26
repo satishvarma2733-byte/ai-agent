@@ -159,15 +159,28 @@ async def end_outbound_call(
                  user_id=current_user.id, details={"room": call.call_room_id}, request=request)
     return {"status": "ok", "room": call.call_room_id}
 
-@router.post("/api/outbound/transfer", status_code=501)
-def transfer_outbound_call(payload: dict, current_user: User = Depends(get_current_user)):
-    """Not available yet: transfers happen inside the voice agent."""
-    raise call_control.not_available("Transferring a call from the dashboard")
+@router.post("/api/outbound/transfer")
+async def transfer_outbound_call(payload: dict, request: Request, db: Session = Depends(get_db),
+                                 current_user: User = Depends(get_current_user)):
+    """Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call."""
+    return await call_control.transfer_request(db, current_user, payload, request)
 
-@router.post("/api/outbound/voicemail", status_code=501)
-def voicemail_outbound_call(payload: dict, current_user: User = Depends(get_current_user)):
-    """Not available yet."""
-    raise call_control.not_available("Sending a caller to voicemail")
+@router.post("/api/outbound/voicemail")
+async def voicemail_outbound_call(payload: dict, request: Request, db: Session = Depends(get_db),
+                                  current_user: User = Depends(get_current_user)):
+    """Have the agent say `message` (or a default) and hang up, e.g. when an answering machine picks up."""
+    return await call_control.voicemail_request(db, current_user, payload, request)
+
+@router.post("/api/calls/listen")
+def listen_to_call(payload: dict, request: Request, db: Session = Depends(get_db),
+                   current_user: User = Depends(RoleChecker(["Manager"]))):
+    """A one-hour, receive-only pass to listen to a live call without the caller or agent hearing you."""
+    from app.core.runtime_config import load_runtime_config as _load_runtime_config
+    call = call_control.find_call(db, current_user.tenant_id, payload)
+    grant = call_control.listen_token(call, current_user.id, current_user.name or current_user.email, _load_runtime_config())
+    audit.record(db, action="call_monitored", entity="CallLog", entity_id=call.id, tenant_id=current_user.tenant_id,
+                 user_id=current_user.id, details={"room": call.call_room_id}, request=request)
+    return grant
 
 @router.get("/api/logs", response_model=List[CallLogOut])
 def get_call_logs(

@@ -242,7 +242,7 @@ export default function Inbound() {
         load()
       } else if (action === 'voicemail') {
         const res = await inboundApi.voicemail(id)
-        if (res.status === 'ok') toast.success('Call routed to voicemail')
+        if (res.status === 'ok') toast.success('The agent will leave the standard message and hang up')
         else toast.error('Failed to route call to voicemail')
         load()
       } else if (action === 'transfer') {

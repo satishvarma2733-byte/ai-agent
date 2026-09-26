@@ -56,7 +56,10 @@ export const callsApi = {
   async transfer(id: string, to: string): Promise<{ status: string }> {
     return api.post('/api/outbound/transfer', { id, to })
   },
-  async voicemail(id: string): Promise<{ status: string }> {
-    return api.post('/api/outbound/voicemail', { id })
+  /** Have the agent say `message` (or a default) and hang up. */
+  async voicemail(id: string, message?: string): Promise<{ status: string }> {
+    return api.post('/api/outbound/voicemail', { id, message })
   },
+  /** A receive-only LiveKit pass to listen to a live call (Managers and above). */
+  listen: (id: string) => api.post<{ url: string; token: string; room: string; expires_in: number }>('/api/calls/listen', { id }),
 }

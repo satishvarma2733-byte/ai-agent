@@ -668,6 +668,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calls/listen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Listen To Call
+         * @description A one-hour, receive-only pass to listen to a live call without the caller or agent hearing you.
+         */
+        post: operations["listen_to_call_api_calls_listen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calls/live": {
         parameters: {
             query?: never;
@@ -1332,7 +1352,7 @@ export interface paths {
         put?: never;
         /**
          * Transfer Inbound Call
-         * @description Not available yet: transfers happen inside the voice agent.
+         * @description Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call.
          */
         post: operations["transfer_inbound_call_api_inbound_transfer_post"];
         delete?: never;
@@ -1352,7 +1372,7 @@ export interface paths {
         put?: never;
         /**
          * Voicemail Inbound Call
-         * @description Not available yet.
+         * @description Have the agent say `message` (or a default) and hang up.
          */
         post: operations["voicemail_inbound_call_api_inbound_voicemail_post"];
         delete?: never;
@@ -1801,7 +1821,7 @@ export interface paths {
         put?: never;
         /**
          * Transfer Outbound Call
-         * @description Not available yet: transfers happen inside the voice agent.
+         * @description Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call.
          */
         post: operations["transfer_outbound_call_api_outbound_transfer_post"];
         delete?: never;
@@ -1821,7 +1841,7 @@ export interface paths {
         put?: never;
         /**
          * Voicemail Outbound Call
-         * @description Not available yet.
+         * @description Have the agent say `message` (or a default) and hang up, e.g. when an answering machine picks up.
          */
         post: operations["voicemail_outbound_call_api_outbound_voicemail_post"];
         delete?: never;
@@ -5213,6 +5233,41 @@ export interface operations {
             };
         };
     };
+    listen_to_call_api_calls_listen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_live_calls_api_calls_live_get: {
         parameters: {
             query?: never;
@@ -6622,6 +6677,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6629,15 +6693,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Successful Response */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };
@@ -6657,6 +6712,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -6664,15 +6728,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Successful Response */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };
@@ -7369,6 +7424,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7376,15 +7440,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Successful Response */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };
@@ -7404,6 +7459,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -7411,15 +7475,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Successful Response */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };

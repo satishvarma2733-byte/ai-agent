@@ -112,6 +112,8 @@ from runtime_env import get_app_data_dir
 
 DEFAULT_GEMINI_TTS_SAMPLE_RATE = 24000
 DEFAULT_AGENT_NAME = os.getenv("LIVEKIT_AGENT_NAME", "vobiz-demo-agent").strip() or "vobiz-demo-agent"
+# Data messages the API sends into a call room to control the agent (see app/services/call_control.py).
+CALL_CONTROL_TOPIC = "avn.control"
 
 _IST = timezone(timedelta(hours=5, minutes=30))
 _call_timestamps: dict[str, list[float]] = defaultdict(list)
@@ -1538,9 +1540,37 @@ async def entrypoint(ctx: JobContext) -> None:
 
     @ctx.room.on("participant_disconnected")
     def _on_participant_disconnected(participant) -> None:
-        del participant
+        # Supervisors listening in from the dashboard come and go without ending the call.
+        if str(getattr(participant, "identity", "")).startswith("monitor-"):
+            return
         logger.info("[ROOM] Participant disconnected; starting shutdown for %s", ctx.room.name)
         ctx.shutdown()
+
+    async def _leave_voicemail(text: str) -> None:
+        logger.info("[CONTROL] Leaving a voicemail in %s", ctx.room.name)
+        session.interrupt()
+        spoken = await say_with_gemini_tts(session, text, live_config, purpose="voicemail")
+        if not spoken:
+            await session.generate_reply(instructions=f"Say exactly this message, then stop talking: {text}")
+        # Roughly how long the message takes to say, plus a pause, before hanging up.
+        await asyncio.sleep(min(60.0, 2.0 + len(text) / 14))
+        try:
+            await ctx.api.room.delete_room(api.DeleteRoomRequest(room=ctx.room.name))
+        except Exception as exc:
+            logger.warning("[CONTROL] Could not end the call after the voicemail: %s", exc)
+            ctx.shutdown()
+
+    @ctx.room.on("data_received")
+    def _on_control_message(packet) -> None:
+        # Commands come from the API (server-sent data has no sender participant), never from people in the room.
+        if getattr(packet, "topic", "") != CALL_CONTROL_TOPIC or getattr(packet, "participant", None) is not None:
+            return
+        try:
+            command = json.loads(bytes(packet.data).decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            return
+        if command.get("action") == "voicemail" and str(command.get("message") or "").strip():
+            asyncio.create_task(_leave_voicemail(str(command["message"])[:600]))
 
 
 def main() -> None:

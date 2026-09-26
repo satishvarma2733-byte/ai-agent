@@ -5,6 +5,10 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // The LiveKit client (~520 kB) is its own chunk, loaded only when a supervisor listens to a call.
+    chunkSizeWarningLimit: 600,
+  },
   resolve: {
     alias: {
       // @/ maps to src/ — matches tsconfig.app.json paths

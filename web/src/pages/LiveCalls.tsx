@@ -1,13 +1,27 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Radio, PhoneOff, Users, Clock, AlertTriangle, RefreshCw, PhoneIncoming, PhoneOutgoing } from 'lucide-react'
+import { Radio, PhoneOff, Users, Clock, AlertTriangle, RefreshCw, PhoneIncoming, PhoneOutgoing, Headphones, PhoneForwarded, Voicemail } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card from '../components/ui/Card'
 import GradientStatCard from '../components/ui/GradientStatCard'
 import { LoadingState } from '../components/ui/States'
 import { callsApi, type LiveCalls as LiveCallsData } from '../api/calls'
+import { useCallListener } from '../components/calls/useCallListener'
 
 const POLL_MS = 5000
+const ROLE_RANK: Record<string, number> = { Viewer: 0, Agent: 1, Manager: 2, Admin: 3, Owner: 4 }
+
+function ActionButton({ onClick, disabled, color, children, label }: {
+  onClick: () => void; disabled?: boolean; color: string; children: React.ReactNode; label: string
+}) {
+  return (
+    <button onClick={onClick} disabled={disabled} aria-label={label} title={label} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: `${color}1A`,
+      border: `1px solid ${color}40`, borderRadius: 8, color, fontSize: 12, fontWeight: 600,
+      cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
+    }}>{children}</button>
+  )
+}
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60)
@@ -20,6 +34,9 @@ export default function LiveCalls() {
   const [error, setError] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
   const [ending, setEnding] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const listener = useCallListener()
+  const canListen = (ROLE_RANK[localStorage.getItem('userRole') || ''] ?? -1) >= ROLE_RANK.Manager
 
   const apply = useCallback((result: PromiseSettledResult<LiveCallsData>) => {
     if (result.status === 'fulfilled') { setData(result.value); setError(null) }
@@ -51,6 +68,44 @@ export default function LiveCalls() {
       toast.error(e instanceof Error ? e.message : 'Could not end the call')
     } finally {
       setEnding(null)
+    }
+  }
+
+  const transfer = async (id: string) => {
+    const to = prompt('Transfer the caller to which number? (with country code, e.g. +919876543210; leave empty for the default transfer number)')
+    if (to === null) return
+    setBusy(id)
+    try {
+      const res = await callsApi.transfer(id, to.trim()) as { transferred_to?: string }
+      toast.success(`Transferring to ${res.transferred_to ?? 'the transfer number'}`)
+      await refresh()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not transfer the call')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const voicemail = async (id: string) => {
+    const message = prompt('Message for the agent to say before hanging up (leave empty for the standard message):')
+    if (message === null) return
+    setBusy(id)
+    try {
+      await callsApi.voicemail(id, message.trim() || undefined)
+      toast.success('The agent will say the message and hang up')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not send the message')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const toggleListen = async (id: string) => {
+    try {
+      if (listener.listeningTo === id) await listener.stop()
+      else await listener.listen(id)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not listen to the call')
     }
   }
 
@@ -132,13 +187,23 @@ export default function LiveCalls() {
                           <td style={{ textAlign: 'right' }}><Users size={12} style={{ verticalAlign: -1, marginRight: 4 }} />{call.participants}</td>
                           <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatDuration(Math.round((now - new Date(call.started_at).getTime()) / 1000))}</td>
                           <td style={{ textAlign: 'right' }}>
-                            <button
-                              onClick={() => endCall(call.id)}
-                              disabled={ending === call.id}
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(255,77,106,0.1)', border: '1px solid rgba(255,77,106,0.25)', borderRadius: 8, color: '#FF4D6A', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                            >
-                              <PhoneOff size={12} /> {ending === call.id ? 'Ending…' : 'End call'}
-                            </button>
+                            <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                              {canListen && (
+                                <ActionButton color="#9580FF" onClick={() => toggleListen(call.id)} disabled={listener.connecting === call.id}
+                                  label={listener.listeningTo === call.id ? 'Stop listening' : `Listen to the call with ${call.caller_name || call.phone_number}`}>
+                                  <Headphones size={12} /> {listener.connecting === call.id ? 'Connecting…' : listener.listeningTo === call.id ? 'Stop' : 'Listen'}
+                                </ActionButton>
+                              )}
+                              <ActionButton color="#5EE6FF" onClick={() => transfer(call.id)} disabled={busy === call.id} label="Transfer to a person">
+                                <PhoneForwarded size={12} /> Transfer
+                              </ActionButton>
+                              <ActionButton color="#F5A623" onClick={() => voicemail(call.id)} disabled={busy === call.id} label="Leave a message and hang up">
+                                <Voicemail size={12} /> Voicemail
+                              </ActionButton>
+                              <ActionButton color="#FF4D6A" onClick={() => endCall(call.id)} disabled={ending === call.id} label="End call">
+                                <PhoneOff size={12} /> {ending === call.id ? 'Ending…' : 'End'}
+                              </ActionButton>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -148,7 +213,8 @@ export default function LiveCalls() {
               )}
             </Card>
             <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginTop: 12 }}>
-              Transfers happen inside the voice agent when its transfer tool is configured; they can't be started from this page yet.
+              Listen joins the call silently: the caller and the agent can't hear you. Transfer hands the caller to a person's phone and the agent leaves.
+              Voicemail has the agent say a message and hang up, useful when an answering machine picks up.
             </div>
           </>
         )}

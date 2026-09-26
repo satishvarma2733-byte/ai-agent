@@ -7197,6 +7197,53 @@
         ]
       }
     },
+    "/api/calls/listen": {
+      "post": {
+        "description": "A one-hour, receive-only pass to listen to a live call without the caller or agent hearing you.",
+        "operationId": "listen_to_call_api_calls_listen_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Listen To Call",
+        "tags": [
+          "Call Management"
+        ]
+      }
+    },
     "/api/calls/live": {
       "get": {
         "description": "Calls in progress right now, read from LiveKit.",
@@ -9332,7 +9379,7 @@
     },
     "/api/inbound/transfer": {
       "post": {
-        "description": "Not available yet: transfers happen inside the voice agent.",
+        "description": "Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call.",
         "operationId": "transfer_inbound_call_api_inbound_transfer_post",
         "requestBody": {
           "content": {
@@ -9347,6 +9394,14 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9356,14 +9411,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -9379,7 +9426,7 @@
     },
     "/api/inbound/voicemail": {
       "post": {
-        "description": "Not available yet.",
+        "description": "Have the agent say `message` (or a default) and hang up.",
         "operationId": "voicemail_inbound_call_api_inbound_voicemail_post",
         "requestBody": {
           "content": {
@@ -9394,6 +9441,14 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -9403,14 +9458,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -10334,7 +10381,7 @@
     },
     "/api/outbound/transfer": {
       "post": {
-        "description": "Not available yet: transfers happen inside the voice agent.",
+        "description": "Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call.",
         "operationId": "transfer_outbound_call_api_outbound_transfer_post",
         "requestBody": {
           "content": {
@@ -10349,6 +10396,14 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10358,14 +10413,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -10381,7 +10428,7 @@
     },
     "/api/outbound/voicemail": {
       "post": {
-        "description": "Not available yet.",
+        "description": "Have the agent say `message` (or a default) and hang up, e.g. when an answering machine picks up.",
         "operationId": "voicemail_outbound_call_api_outbound_voicemail_post",
         "requestBody": {
           "content": {
@@ -10396,6 +10443,14 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -10405,14 +10460,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [

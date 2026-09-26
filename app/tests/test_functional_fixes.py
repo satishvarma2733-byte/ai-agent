@@ -83,8 +83,8 @@ class TestFunctionalFixes(unittest.TestCase):
         with patch("app.services.call_control.end_call", AsyncMock()) as end:
             self.assertEqual(owner.post("/api/inbound/end", json={"id": room}).status_code, 200)
         self.assertEqual(end.await_args.args[0].call_room_id, room)
-        for path in ("/api/inbound/transfer", "/api/outbound/voicemail", "/api/inbound/start"):
-            self.assertEqual(owner.post(path, json={"id": room}).status_code, 501, path)
+        # Inbound calls can't be started from the dashboard; transfer and voicemail are tested in test_call_operations.
+        self.assertEqual(owner.post("/api/inbound/start", json={"id": room}).status_code, 501)
 
     def test_overview_uses_only_this_workspace(self):
         owner, other = _TenantClient(self.client), _TenantClient(self.client)

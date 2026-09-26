@@ -42,12 +42,14 @@ async def end_inbound_call(
                  user_id=current_user.id, details={"room": call.call_room_id}, request=request)
     return {"status": "ok", "room": call.call_room_id}
 
-@router.post("/api/inbound/transfer", status_code=501)
-def transfer_inbound_call(payload: dict, current_user: User = Depends(get_current_user)):
-    """Not available yet: transfers happen inside the voice agent."""
-    raise call_control.not_available("Transferring a call from the dashboard")
+@router.post("/api/inbound/transfer")
+async def transfer_inbound_call(payload: dict, request: Request, db: Session = Depends(get_db),
+                                current_user: User = Depends(get_current_user)):
+    """Transfer the caller to `to` (E.164) or the default transfer number. The AI agent leaves the call."""
+    return await call_control.transfer_request(db, current_user, payload, request)
 
-@router.post("/api/inbound/voicemail", status_code=501)
-def voicemail_inbound_call(payload: dict, current_user: User = Depends(get_current_user)):
-    """Not available yet."""
-    raise call_control.not_available("Sending a caller to voicemail")
+@router.post("/api/inbound/voicemail")
+async def voicemail_inbound_call(payload: dict, request: Request, db: Session = Depends(get_db),
+                                 current_user: User = Depends(get_current_user)):
+    """Have the agent say `message` (or a default) and hang up."""
+    return await call_control.voicemail_request(db, current_user, payload, request)
