@@ -14,3 +14,5 @@ class Tenant(Base, TimestampMixin):
     status = Column(String(50), default="active", nullable=False)  # active | suspended
     # Who gets an email after each call, as JSON (see app/services/call_summaries.py). Empty = off.
     call_summaries = Column(Text, nullable=True)
+    # Business figures as JSON, e.g. {"booking_value": 1500, "currency": "INR"} (app/services/business_settings.py).
+    business_settings = Column(Text, nullable=True)

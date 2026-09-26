@@ -27,6 +27,7 @@ const LiveCalls = lazy(() => import('./pages/LiveCalls'))
 const Team = lazy(() => import('./pages/Team'))
 const Billing = lazy(() => import('./pages/Billing'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Tasks = lazy(() => import('./pages/Tasks'))
 
 // Each page is its own chunk, loaded on first visit, so sign-in doesn't download the whole app.
 function PageLoading() {
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/crm"            element={<ProtectedRoute><CRM /></ProtectedRoute>} />
           <Route path="/appointments"   element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
           <Route path="/workflows"      element={<ProtectedRoute><Workflows /></ProtectedRoute>} />
+          <Route path="/tasks"          element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/knowledge-base" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
           <Route path="/cms"            element={<ProtectedRoute><CMS /></ProtectedRoute>} />
           <Route path="/team"           element={<ProtectedRoute><Team /></ProtectedRoute>} />

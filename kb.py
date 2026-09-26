@@ -558,6 +558,77 @@ def _extract_pdf_text_from_bytes(content: bytes) -> str:
     return "\n\n".join(parts).strip()
 
 
+DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+MAX_DOCX_XML_BYTES = 20 * 1024 * 1024  # a zip bomb guard for document.xml
+MAX_CSV_ROWS = 5000
+# A PDF whose text layer gives less than this is treated as scanned and read with Gemini (OCR).
+OCR_MIN_CHARS = 80
+OCR_MAX_PDF_BYTES = 18 * 1024 * 1024
+
+
+def _extract_docx_text(content: bytes) -> str:
+    """Paragraph and table text from a .docx (a zip of XML), without extra dependencies."""
+    import zipfile
+    from xml.etree import ElementTree
+
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        info = archive.getinfo("word/document.xml")
+        if info.file_size > MAX_DOCX_XML_BYTES:
+            raise RuntimeError("This Word document is too large to read.")
+        root = ElementTree.fromstring(archive.read(info))
+    body = root.find(f"{ns}body")
+    lines: list[str] = []
+    for block in (body if body is not None else []):
+        if block.tag == f"{ns}p":
+            text = "".join(t.text or "" for t in block.iter(f"{ns}t")).strip()
+            if text:
+                lines.append(text)
+        elif block.tag == f"{ns}tbl":
+            for row in block.iter(f"{ns}tr"):
+                cells = ["".join(t.text or "" for t in cell.iter(f"{ns}t")).strip() for cell in row.iter(f"{ns}tc")]
+                if any(cells):
+                    lines.append(" | ".join(cells))
+    return "\n".join(lines).strip()
+
+
+def _extract_csv_text(content: bytes) -> str:
+    """Each row as "column: value; …" so a price list or FAQ sheet reads naturally."""
+    import csv
+
+    text = content.decode("utf-8-sig", errors="replace")
+    reader = csv.reader(io.StringIO(text))
+    rows = list(reader)[: MAX_CSV_ROWS + 1]
+    if not rows:
+        return ""
+    header, lines = [h.strip() for h in rows[0]], []
+    for row in rows[1:]:
+        pairs = [f"{header[i] if i < len(header) and header[i] else f'column {i + 1}'}: {value.strip()}"
+                 for i, value in enumerate(row) if value.strip()]
+        if pairs:
+            lines.append("; ".join(pairs))
+    return "\n".join(lines).strip()
+
+
+def _ocr_pdf(content: bytes, *, config: dict | None) -> str:
+    """Text of a scanned PDF, read by Gemini. Empty when Gemini isn't configured or the file is too big."""
+    runtime = get_runtime_config(config)
+    client_kwargs = _google_genai_client_kwargs(runtime)
+    if client_kwargs is None or len(content) > OCR_MAX_PDF_BYTES:
+        return ""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(**client_kwargs)
+    response = client.models.generate_content(
+        model=str((config or {}).get("gemini_text_model") or "gemini-2.5-flash"),
+        contents=[types.Part.from_bytes(data=content, mime_type="application/pdf"),
+                  "Transcribe all the text in this document exactly as written, in its original language and script. "
+                  "Keep headings and table rows on their own lines. Output only the text."],
+    )
+    return str(response.text or "").strip()
+
+
 def _fetch_url_response(url: str, *, timeout: float = 30.0) -> httpx.Response:
     response = _safe_get(url, timeout=timeout)
     response.raise_for_status()
@@ -980,12 +1051,21 @@ def _extract_documents(source: dict[str, Any], *, config: dict | None) -> list[d
     if source_type == "pdf_upload":
         mime = str(source.get("mime_type") or "").lower()
         file_bytes = _download_source_bytes(source, config=config)
-        if "markdown" in mime or "text" in mime or title.lower().endswith((".md", ".txt")):
+        name = title.lower()
+        metadata: dict[str, Any] = {"source_url": source.get("source_url")}
+        if mime == DOCX_MIME or name.endswith(".docx"):
+            content = _extract_docx_text(file_bytes)
+        elif "csv" in mime or name.endswith(".csv"):
+            content = _extract_csv_text(file_bytes)
+        elif "markdown" in mime or "text" in mime or name.endswith((".md", ".txt")):
             content = file_bytes.decode("utf-8", errors="replace")
         else:
             content = _extract_pdf_text_from_bytes(file_bytes)
-        return [{"external_id": f"source:{source['id']}", "title": title, "body_text": content,
-                 "metadata": {"source_url": source.get("source_url")}}]
+            if len(content) < OCR_MIN_CHARS:
+                scanned = _ocr_pdf(file_bytes, config=config)
+                if len(scanned) > len(content):
+                    content, metadata["ocr"] = scanned, True
+        return [{"external_id": f"source:{source['id']}", "title": title, "body_text": content, "metadata": metadata}]
     raise RuntimeError(f"Unsupported KB ingest source type: {source_type}")
 
 

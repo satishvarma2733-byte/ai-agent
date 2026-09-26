@@ -1858,7 +1858,7 @@ export interface paths {
         put?: never;
         /**
          * Kb Upload
-         * @description Upload a PDF, TXT, or Markdown document and queue ingestion.
+         * @description Upload a PDF (scanned ones are read with OCR), Word (.docx), CSV, TXT or Markdown document and queue ingestion.
          */
         post: operations["kb_upload_api_kb_upload_post"];
         delete?: never;
@@ -2104,6 +2104,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/profitability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profitability
+         * @description Cost, bookings and estimated revenue per agent and campaign. Revenue uses the workspace's average
+         *     booking value (Settings → Workspace); cost is what the voice pipeline reports per call.
+         */
+        get: operations["get_profitability_api_stats_profitability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/status": {
         parameters: {
             query?: never;
@@ -2123,6 +2144,45 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tasks
+         * @description Open tasks first by due date (tasks without one last).
+         */
+        get: operations["list_tasks_api_tasks_get"];
+        put?: never;
+        /** Create Task */
+        post: operations["create_task_api_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Task */
+        delete: operations["delete_task_api_tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Task */
+        patch: operations["update_task_api_tasks__task_id__patch"];
         trace?: never;
     };
     "/api/team/invitations": {
@@ -2251,6 +2311,27 @@ export interface paths {
         head?: never;
         /** Update Workspace */
         patch: operations["update_workspace_api_workspace_patch"];
+        trace?: never;
+    };
+    "/api/workspace/business": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Business Settings
+         * @description The average value of a booking, used for estimated revenue in Analytics.
+         */
+        get: operations["get_business_settings_api_workspace_business_get"];
+        /** Update Business Settings */
+        put: operations["update_business_settings_api_workspace_business_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/workspace/call-summaries": {
@@ -2620,6 +2701,16 @@ export interface components {
         Body_upload_media_api_cms_media_upload_post: {
             /** File */
             file: string;
+        };
+        /** BusinessSettingsIO */
+        BusinessSettingsIO: {
+            /** Booking Value */
+            booking_value?: number | null;
+            /**
+             * Currency
+             * @default INR
+             */
+            currency: string;
         };
         /** CMSFaqCreate */
         CMSFaqCreate: {
@@ -3135,6 +3226,33 @@ export interface components {
              */
             total_leads: number;
         };
+        /** CampaignProfitRow */
+        CampaignProfitRow: {
+            /** Bookings */
+            bookings: number;
+            /** Calls */
+            calls: number;
+            /** Conversion Rate */
+            conversion_rate?: number | null;
+            /** Cost Per Booking Usd */
+            cost_per_booking_usd?: number | null;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Id */
+            id: string;
+            /** Leads */
+            leads: number;
+            /** Minutes */
+            minutes: number;
+            /** Name */
+            name: string;
+            /** Reached */
+            reached: number;
+            /** Revenue */
+            revenue?: number | null;
+            /** Status */
+            status: string;
+        };
         /** ChangeOut */
         ChangeOut: {
             /** Changes */
@@ -3336,6 +3454,21 @@ export interface components {
             status: string;
             /** Url */
             url?: string | null;
+        };
+        /** LanguageStat */
+        LanguageStat: {
+            /** Avg Duration */
+            avg_duration: number;
+            /** Bookings */
+            bookings: number;
+            /** Calls */
+            calls: number;
+            /** Language */
+            language: string;
+            /** Minutes */
+            minutes: number;
+            /** Name */
+            name: string;
         };
         /** Latency */
         Latency: {
@@ -3740,6 +3873,8 @@ export interface components {
             follow_ups: components["schemas"]["FollowUps"];
             /** Heatmap */
             heatmap: components["schemas"]["HeatCell"][];
+            /** Languages */
+            languages: components["schemas"]["LanguageStat"][];
             latency: components["schemas"]["Latency"];
             month: components["schemas"]["MonthUsage"];
             /** Sentiment */
@@ -3796,6 +3931,41 @@ export interface components {
             currency: string;
             /** Provider */
             provider: string;
+        };
+        /** ProfitRow */
+        ProfitRow: {
+            /** Bookings */
+            bookings: number;
+            /** Calls */
+            calls: number;
+            /** Conversion Rate */
+            conversion_rate?: number | null;
+            /** Cost Per Booking Usd */
+            cost_per_booking_usd?: number | null;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Id */
+            id: string;
+            /** Minutes */
+            minutes: number;
+            /** Name */
+            name: string;
+            /** Revenue */
+            revenue?: number | null;
+        };
+        /** ProfitabilityOut */
+        ProfitabilityOut: {
+            /** Agents */
+            agents: components["schemas"]["ProfitRow"][];
+            /** Booking Value */
+            booking_value?: number | null;
+            /** Campaigns */
+            campaigns: components["schemas"]["CampaignProfitRow"][];
+            /** Currency */
+            currency?: string | null;
+            /** Days */
+            days: number;
+            totals: components["schemas"]["ProfitRow"];
         };
         /** RedirectOut */
         RedirectOut: {
@@ -3903,6 +4073,62 @@ export interface components {
             last_synced_at?: string | null;
             /** Pushed */
             pushed: number;
+        };
+        /** TaskIn */
+        TaskIn: {
+            /** Assigned User Id */
+            assigned_user_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** TaskOut */
+        TaskOut: {
+            /** Assigned Name */
+            assigned_name?: string | null;
+            /** Assigned User Id */
+            assigned_user_id?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Due Date */
+            due_date?: string | null;
+            /** Id */
+            id: string;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Lead Name */
+            lead_name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Overdue */
+            overdue: boolean;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+        };
+        /** TaskPatch */
+        TaskPatch: {
+            /** Assigned User Id */
+            assigned_user_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Status */
+            status?: ("open" | "done") | null;
+            /** Title */
+            title?: string | null;
         };
         /** TemplateIn */
         TemplateIn: {
@@ -8282,6 +8508,37 @@ export interface operations {
             };
         };
     };
+    get_profitability_api_stats_profitability_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitabilityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     system_status_api_system_status_get: {
         parameters: {
             query?: never;
@@ -8298,6 +8555,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_tasks_api_tasks_get: {
+        parameters: {
+            query?: {
+                mine?: boolean;
+                status?: "open" | "done" | "all";
+                lead_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_task_api_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_task_api_tasks__task_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_task_api_tasks__task_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8573,6 +8961,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_business_settings_api_workspace_business_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessSettingsIO"];
+                };
+            };
+        };
+    };
+    update_business_settings_api_workspace_business_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BusinessSettingsIO"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessSettingsIO"];
                 };
             };
             /** @description Validation Error */

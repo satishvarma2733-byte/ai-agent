@@ -4,6 +4,7 @@ import IntegrationsTab from '../components/settings/IntegrationsTab'
 import WhatsAppCard from '../components/settings/WhatsAppCard'
 import CallSummaryCard from '../components/settings/CallSummaryCard'
 import SmsCard from '../components/settings/SmsCard'
+import BusinessValueCard from '../components/settings/BusinessValueCard'
 import LeadFieldsTab from '../components/settings/LeadFieldsTab'
 import toast from 'react-hot-toast'
 import Card from '../components/ui/Card'
@@ -229,6 +230,7 @@ export default function Settings() {
         {activeTab === 'workspace' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <WorkspaceTab canEdit={canEditWorkspace} />
+            {canEditWorkspace && <BusinessValueCard />}
             {canEditWorkspace && <CallSummaryCard />}
           </div>
         )}

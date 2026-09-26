@@ -350,6 +350,9 @@ def add_timeline_activity(
     db.add(activity)
     db.commit()
     db.refresh(activity)
+    from app.services import mentions
+    mentions.notify_mentions(db, current_user.tenant_id, f"{payload.title} {payload.description}", current_user,
+                             about=f"lead {lead.name}", link="/crm")
     return activity
 
 @router.post("/leads/{lead_id}/score")

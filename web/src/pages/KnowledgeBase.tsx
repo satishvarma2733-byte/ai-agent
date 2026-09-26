@@ -532,10 +532,10 @@ export default function KnowledgeBase() {
             />
           ) : (
             <div>
-              <label style={{ fontSize: 12.5, fontWeight: 500, color: '#8891a8', display: 'block', marginBottom: 5 }}>File (PDF, TXT, or Markdown)</label>
+              <label style={{ fontSize: 12.5, fontWeight: 500, color: '#8891a8', display: 'block', marginBottom: 5 }}>File (PDF, Word, CSV, TXT or Markdown; scanned PDFs are read with OCR)</label>
               <input
                 type="file"
-                accept=".pdf,.txt,.md"
+                accept=".pdf,.docx,.csv,.txt,.md"
                 onChange={e => setCreateFile(e.target.files?.[0] ?? null)}
                 style={{ fontSize: 13, color: 'var(--color-text-primary)' }}
               />
@@ -594,7 +594,7 @@ function FileDropZone({ onFile }: { onFile: (f: File) => Promise<void> }) {
   const [uploading, setUploading] = useState(false)
 
   async function handle(file: File) {
-    if (!file.name.endsWith('.pdf')) { toast.error('Only PDF files are supported'); return }
+    if (!/.(pdf|docx|csv|txt|md)$/i.test(file.name)) { toast.error('Upload a PDF, Word, CSV, TXT or Markdown file'); return }
     setUploading(true)
     await onFile(file).finally(() => setUploading(false))
   }

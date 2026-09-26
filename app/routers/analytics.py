@@ -116,6 +116,15 @@ class FollowUps(BaseModel):
     today: int
 
 
+class LanguageStat(BaseModel):
+    language: str  # en, te, hi, … mixed, unknown (from the caller's words; see app/services/call_language.py)
+    name: str
+    calls: int
+    bookings: int
+    minutes: int
+    avg_duration: int
+
+
 class OverviewOut(BaseModel):
     timezone: str
     days: int
@@ -129,6 +138,7 @@ class OverviewOut(BaseModel):
     activity: List[ActivityItem]
     month: MonthUsage
     follow_ups: FollowUps
+    languages: List[LanguageStat]
 
 
 def _utc(value: datetime) -> datetime:
@@ -226,8 +236,19 @@ def get_overview(
     follow_ups = FollowUps(overdue=open_leads.filter(Lead.follow_up_date < today_iso).count(),
                            today=open_leads.filter(Lead.follow_up_date == today_iso).count())
 
+    from app.services import call_language
+    by_language: dict[str, list[CallLog]] = {}
+    for call in recent:
+        by_language.setdefault(call_language.detect(call.transcript), []).append(call)
+    languages = sorted((LanguageStat(
+        language=code, name=call_language.NAMES.get(code, code), calls=len(calls),
+        bookings=sum(1 for c in calls if c.was_booked), minutes=round(sum(c.duration_seconds or 0 for c in calls) / 60),
+        avg_duration=round(sum(c.duration_seconds or 0 for c in calls) / len(calls))) for code, calls in by_language.items()),
+        key=lambda item: -item.calls)
+
     return OverviewOut(
         timezone=tz,
+        languages=languages,
         days=days,
         totals=Totals(
             calls=total_calls,
@@ -254,3 +275,76 @@ def get_overview(
             cost_usd=round(sum(c.estimated_cost_usd or 0.0 for c in month_calls), 2),
         ),
     )
+
+
+# ── Profitability: what calls cost and what they bring in, per agent and per campaign ─────────
+
+class ProfitRow(BaseModel):
+    id: str
+    name: str
+    calls: int
+    minutes: int
+    bookings: int
+    conversion_rate: Optional[int] = None  # % of calls that booked
+    cost_usd: float
+    cost_per_booking_usd: Optional[float] = None
+    revenue: Optional[float] = None  # bookings x the workspace's booking value
+
+
+class CampaignProfitRow(ProfitRow):
+    status: str
+    leads: int
+    reached: int  # leads whose call connected
+
+
+class ProfitabilityOut(BaseModel):
+    days: int
+    booking_value: Optional[float] = None
+    currency: Optional[str] = None
+    totals: ProfitRow
+    agents: List[ProfitRow]
+    campaigns: List[CampaignProfitRow]
+
+
+def _profit(id_: str, name: str, calls: list, booking_value: Optional[float]) -> dict:
+    bookings = sum(1 for c in calls if c.was_booked)
+    cost = round(sum(c.estimated_cost_usd or 0.0 for c in calls), 2)
+    return dict(id=id_, name=name, calls=len(calls), minutes=round(sum(c.duration_seconds or 0 for c in calls) / 60),
+                bookings=bookings, conversion_rate=round(100 * bookings / len(calls)) if calls else None,
+                cost_usd=cost, cost_per_booking_usd=round(cost / bookings, 2) if bookings else None,
+                revenue=round(bookings * booking_value, 2) if booking_value is not None else None)
+
+
+@router.get("/profitability", response_model=ProfitabilityOut)
+def get_profitability(days: int = Query(30, ge=1, le=365), db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_user)):
+    """Cost, bookings and estimated revenue per agent and campaign. Revenue uses the workspace's average
+    booking value (Settings → Workspace); cost is what the voice pipeline reports per call."""
+    from app.models.campaign import Campaign, CampaignLead
+    from app.models.tenant import Tenant
+    from app.services import business_settings
+    tenant = db.get(Tenant, current_user.tenant_id)
+    biz = business_settings.read(tenant)
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).replace(tzinfo=None)
+    calls = db.query(CallLog).filter(CallLog.tenant_id == current_user.tenant_id, CallLog.created_at >= since).all()
+    agents = {a.id: a.name for a in db.query(Agent).filter(Agent.tenant_id == current_user.tenant_id)}
+    by_agent: dict[str, list] = {}
+    for call in calls:
+        by_agent.setdefault(call.agent_id or "", []).append(call)
+    agent_rows = [ProfitRow(**_profit(aid or "default", agents.get(aid, "Default agent"), rows, biz.booking_value))
+                  for aid, rows in by_agent.items()]
+    agent_rows.sort(key=lambda r: (-r.bookings, -r.calls))
+
+    by_room = {c.call_room_id: c for c in calls if c.call_room_id}
+    campaign_rows = []
+    for camp in db.query(Campaign).filter(Campaign.tenant_id == current_user.tenant_id, Campaign.created_at >= since):
+        leads = db.query(CampaignLead).filter(CampaignLead.campaign_id == camp.id).all()
+        camp_calls = [by_room[lead.call_room_id] for lead in leads if lead.call_room_id in by_room]
+        row = _profit(camp.id, camp.name, camp_calls, biz.booking_value)
+        campaign_rows.append(CampaignProfitRow(**row, status=camp.status, leads=len(leads),
+                                               reached=sum(1 for lead in leads if lead.outcome in ("booked", "completed"))))
+    campaign_rows.sort(key=lambda r: -r.bookings)
+    return ProfitabilityOut(days=days, booking_value=biz.booking_value, currency=biz.currency,
+                            totals=ProfitRow(**_profit("all", "All calls", calls, biz.booking_value)),
+                            agents=agent_rows, campaigns=campaign_rows)
+

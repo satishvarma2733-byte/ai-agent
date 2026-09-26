@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Settings2, PhoneCall, Users, CalendarDays, BookOpen,
   PhoneOutgoing, Bot, BarChart3, PhoneIncoming, FileText, Bell, Search,
   ChevronLeft, ChevronRight, Zap, Activity, GitBranch, Radio, UserCheck,
-  CreditCard, Sun, Moon, Command, Wifi, WifiOff, Menu, X, Shield,
+  CreditCard, Sun, Moon, Command, Wifi, WifiOff, Menu, X, Shield, ListTodo,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -38,6 +38,7 @@ const navGroups = [
       { to: '/crm', label: 'Voice CRM', icon: Users },
       { to: '/appointments', label: 'Appointments', icon: CalendarDays },
       { to: '/workflows', label: 'Workflows', icon: GitBranch },
+      { to: '/tasks', label: 'Tasks', icon: ListTodo },
     ],
   },
   {

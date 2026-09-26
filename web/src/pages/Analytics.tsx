@@ -7,6 +7,7 @@ import GradientStatCard from '../components/ui/GradientStatCard'
 import Card from '../components/ui/Card'
 import { LoadingState } from '../components/ui/States'
 import { analyticsApi, PERIOD_DAYS, type DayPoint, type Overview, type Period } from '../api/analytics'
+import ProfitabilitySection, { LanguageTable } from '../components/analytics/ProfitabilitySection'
 import { downloadCsv } from '../lib/csv'
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -335,6 +336,14 @@ export default function Analytics() {
 
             <div style={{ marginBottom: 18 }}>
               <AgentTable agents={data.agents} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <LanguageTable languages={data.languages} />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <ProfitabilitySection days={PERIOD_DAYS[period]} />
             </div>
 
             <Card padding={0}>

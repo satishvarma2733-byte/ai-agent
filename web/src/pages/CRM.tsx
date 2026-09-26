@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { crmApi } from '../api/crm'
 import LeadWhatsApp from '../components/crm/LeadWhatsApp'
+import LeadTasks from '../components/crm/LeadTasks'
 import { apiUrl } from '../api/client'
 import { logsApi } from '../api/logs'
 import type { Lead, LeadActivity, Workflow, LeadStatus, LeadScore } from '../types'
@@ -1493,6 +1494,7 @@ export default function CRM() {
             )}
 
             <LeadWhatsApp leadId={selectedLead.id} onSent={() => { crmApi.getTimeline(selectedLead.id).then(setTimeline).catch(() => {}) }} />
+            <LeadTasks key={selectedLead.id} leadId={selectedLead.id} />
 
             {/* TIMELINE ACTIVITIES FEED */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1505,7 +1507,7 @@ export default function CRM() {
               <form onSubmit={handleAddNote} style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
-                  placeholder="Write a custom activity note..."
+                  placeholder="Write a note… use @name to notify a teammate"
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   className="avn-input"

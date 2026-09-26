@@ -3,6 +3,9 @@ import type { Schema } from './types'
 
 export type Overview = Schema<'OverviewOut'>
 export type DayPoint = Schema<'DayPoint'>
+export type LanguageStat = Schema<'LanguageStat'>
+export type Profitability = Schema<'ProfitabilityOut'>
+export type ProfitRow = Schema<'ProfitRow'>
 export type Period = '7d' | '30d' | '90d'
 
 export const PERIOD_DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 }
@@ -19,4 +22,6 @@ export const analyticsApi = {
   /** Workspace metrics computed on the server from real call, lead and appointment records. */
   overview: (days = 14) =>
     api.get<Overview>(`/api/stats/overview?days=${days}&tz=${encodeURIComponent(browserTimezone())}`),
+  /** Cost, bookings and estimated revenue per agent and campaign. */
+  profitability: (days = 30) => api.get<Profitability>(`/api/stats/profitability?days=${days}`),
 }

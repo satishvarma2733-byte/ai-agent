@@ -113,3 +113,33 @@ def test_call_summary(db: Session = Depends(get_db), current_user: User = Depend
     subject, body = call_summaries.compose(db, log, cfg)
     outcomes = [deliver(address, f"[Test] {subject}", body) for address in to]
     return CallSummaryTestOut(recipients=to, status=next((s for s in ("sent", "logged") if s in outcomes), outcomes[0]))
+
+
+class BusinessSettingsIO(BaseModel):
+    booking_value: float | None = Field(default=None, ge=0, le=10_000_000)
+    currency: str = Field(default="INR", max_length=3)
+
+
+@router.get("/business", response_model=BusinessSettingsIO)
+def get_business_settings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """The average value of a booking, used for estimated revenue in Analytics."""
+    from dataclasses import asdict
+
+    from app.services import business_settings
+    return BusinessSettingsIO(**asdict(business_settings.read(_tenant(db, current_user.tenant_id))))
+
+
+@router.put("/business", response_model=BusinessSettingsIO)
+def update_business_settings(payload: BusinessSettingsIO, request: Request, db: Session = Depends(get_db),
+                             current_user: User = Depends(RoleChecker(["Admin"]))):
+    from dataclasses import asdict
+
+    from app.services import business_settings
+    tenant = _tenant(db, current_user.tenant_id)
+    try:
+        saved = business_settings.save(db, tenant, business_settings.BusinessSettings(**payload.model_dump()))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    audit.record(db, action="business_settings_updated", entity="Tenant", entity_id=tenant.id, tenant_id=tenant.id,
+                 user_id=current_user.id, details=asdict(saved), request=request)
+    return BusinessSettingsIO(**asdict(saved))

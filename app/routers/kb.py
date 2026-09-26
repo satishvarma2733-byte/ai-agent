@@ -14,7 +14,8 @@ from app.models.user import User
 logger = logging.getLogger("kb-api")
 router = APIRouter(prefix="/api/kb", tags=["Knowledge Base"])
 
-ALLOWED_UPLOAD_TYPES = {".pdf": "application/pdf", ".txt": "text/plain", ".md": "text/markdown"}
+ALLOWED_UPLOAD_TYPES = {".pdf": "application/pdf", ".txt": "text/plain", ".md": "text/markdown", ".csv": "text/csv",
+                        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
 
 
 def _process_soon(config: dict, limit: int) -> None:
@@ -95,7 +96,7 @@ def kb_reindex(current_user: User = Depends(RoleChecker(["Manager"]))):
 
 @router.post("/upload")
 async def kb_upload(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
-    """Upload a PDF, TXT, or Markdown document and queue ingestion."""
+    """Upload a PDF (scanned ones are read with OCR), Word (.docx), CSV, TXT or Markdown document and queue ingestion."""
     config = _load_runtime_config()
     if not file.filename:
         return _bad_request(ValueError("File name is required."))
@@ -107,6 +108,8 @@ async def kb_upload(file: UploadFile = File(...), current_user: User = Depends(g
         return _bad_request(ValueError(f"File too large. Max size {MAX_KB_UPLOAD_BYTES // (1024 * 1024)}MB"))
     if ext == ".pdf" and not content.startswith(b"%PDF"):
         return _bad_request(ValueError("This file is not a valid PDF."))
+    if ext == ".docx" and not content.startswith(b"PK\x03\x04"):
+        return _bad_request(ValueError("This file is not a valid Word document."))
     safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", file.filename)
     mime_type = ALLOWED_UPLOAD_TYPES[ext] or mimetypes.guess_type(file.filename)[0] or "application/octet-stream"
     stored = kb.save_uploaded_file(safe_name, content, mime_type=mime_type, config=config)
