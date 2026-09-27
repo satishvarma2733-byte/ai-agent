@@ -39,7 +39,7 @@ def issue_access_token(user: User, session: AuthSession) -> str:
 
 
 def create_session(db: Session, user: User, *, user_agent: str | None, ip: str | None) -> tuple[str, str]:
-    """Start a session. Returns (access_token, refresh_token)."""
+    """Start a session in the user's current workspace (user.tenant_id). Returns (access_token, refresh_token)."""
     refresh = new_opaque_token()
     now = utcnow()
     session = AuthSession(
@@ -81,6 +81,11 @@ def rotate_session(db: Session, refresh_token: str) -> tuple[User, str, str]:
     user = db.query(User).filter(User.id == session.user_id).first()
     if user is None or user.status != "active":
         raise SessionError("User not found or inactive")
+    from app.services import memberships
+    membership = memberships.active(db, user.id, session.tenant_id)
+    if membership is None:
+        raise SessionError("You no longer have access to this workspace")
+    memberships.apply_workspace(user, membership)
 
     new_refresh = new_opaque_token()
     session.previous_token_hash = token_hash
@@ -91,9 +96,13 @@ def rotate_session(db: Session, refresh_token: str) -> tuple[User, str, str]:
     return user, issue_access_token(user, session), new_refresh
 
 
-def session_is_active(db: Session, session_id: str) -> bool:
+def active_session(db: Session, session_id: str) -> AuthSession | None:
     session = db.query(AuthSession).filter(AuthSession.id == session_id).first()
-    return session is not None and session.revoked_at is None and session.expires_at > utcnow()
+    return session if session is not None and session.revoked_at is None and session.expires_at > utcnow() else None
+
+
+def session_is_active(db: Session, session_id: str) -> bool:
+    return active_session(db, session_id) is not None
 
 
 def revoke_session(db: Session, session_id: str) -> None:
@@ -103,10 +112,12 @@ def revoke_session(db: Session, session_id: str) -> None:
     db.commit()
 
 
-def revoke_all_sessions(db: Session, user_id: str) -> None:
-    db.query(AuthSession).filter(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None)).update(
-        {AuthSession.revoked_at: utcnow()}, synchronize_session=False
-    )
+def revoke_all_sessions(db: Session, user_id: str, tenant_id: str | None = None) -> None:
+    """Sign the person out everywhere, or only of the devices working in `tenant_id`."""
+    q = db.query(AuthSession).filter(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None))
+    if tenant_id:
+        q = q.filter(AuthSession.tenant_id == tenant_id)
+    q.update({AuthSession.revoked_at: utcnow()}, synchronize_session=False)
     db.commit()
 
 

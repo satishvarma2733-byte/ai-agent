@@ -19,3 +19,4 @@ from app.models.agent_test import AgentTestCase, AgentTestRun  # noqa: F401
 from app.models.sms import CalendarFeed, SmsAccount  # noqa: F401
 from app.models.task import Task  # noqa: F401
 from app.models.widget import ApiKey, ChatSession, ChatWidget  # noqa: F401
+from app.models.membership import Membership  # noqa: F401

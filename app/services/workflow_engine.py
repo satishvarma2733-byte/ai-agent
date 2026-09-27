@@ -218,10 +218,11 @@ class WorkflowEngine:
             agent = str(config.get("agent") or "").strip()
             if not agent:
                 return "assignment skipped: no team member configured"
-            member = db.query(User).filter(
-                User.tenant_id == tenant_id, User.status == "active",
+            from app.services import memberships
+            row = memberships.members(db, tenant_id, active_only=True).filter(
                 (func.lower(User.email) == agent.lower()) | (func.lower(User.name) == agent.lower()),
             ).first()
+            member = row[0] if row else None
             if member is None:
                 return f"assignment skipped: no active member named or emailed '{agent}'"
             lead.assigned_user_id = member.id

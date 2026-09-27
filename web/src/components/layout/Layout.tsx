@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/useAppStore'
 import toast from 'react-hot-toast'
 import { api } from '@/api/client'
 import { logout } from '@/lib/session'
+import WorkspaceMenu from './WorkspaceMenu'
 import { notificationsApi, type InboxItem } from '@/api/notifications'
 
 const navGroups = [
@@ -591,6 +592,7 @@ export default function Layout({ children }: LayoutProps) {
                     <div style={{ fontSize: 12, color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userEmail}</div>
                     {role && <div style={{ fontSize: 11, color: '#9580FF', marginTop: 4 }}>{role}</div>}
                   </div>
+                  <WorkspaceMenu />
                   <button role="menuitem" onClick={() => { setUserMenuOpen(false); navigate('/settings') }}
                     style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--color-text-primary)', fontSize: 13, cursor: 'pointer' }}>
                     Settings

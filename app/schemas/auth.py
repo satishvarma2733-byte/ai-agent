@@ -33,8 +33,9 @@ class ResetPasswordIn(TokenIn):
 
 
 class AcceptInvitationIn(TokenIn):
-    name: str = Field(min_length=1, max_length=100)
-    password: str = Field(min_length=10, max_length=128)
+    """New to aVn: a name and a new password (10+ characters). Already has an account: that account's password."""
+    name: Optional[str] = Field(default=None, max_length=100)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class InvitationPreviewOut(BaseModel):
@@ -42,6 +43,22 @@ class InvitationPreviewOut(BaseModel):
     role: Role
     tenant_name: str
     expires_at: UTCDateTime
+    existing_account: bool = False
+
+
+class AccountWorkspaceOut(BaseModel):
+    id: str
+    name: str
+    role: Role
+    current: bool
+
+
+class WorkspaceSwitchIn(BaseModel):
+    tenant_id: str = Field(min_length=1, max_length=50)
+
+
+class WorkspaceCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
 
 
 class InvitationCreate(BaseModel):

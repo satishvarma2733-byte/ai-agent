@@ -18,12 +18,15 @@ from app.schemas.auth import (
     EmailIn,
     InvitationPreviewOut,
     SignupAcceptedOut,
+    WorkspaceCreateIn,
+    AccountWorkspaceOut,
+    WorkspaceSwitchIn,
     ResetPasswordIn,
     SessionOut,
     TokenIn,
 )
 from app.schemas.user import LoginRequest, UserCreate, UserOut
-from app.services import audit
+from app.services import audit, memberships
 from app.services.auth_service import (
     SessionError,
     consume_user_token,
@@ -123,6 +126,8 @@ def signup(payload: UserCreate, request: Request, db: Session = Depends(get_db))
         joined=utcnow().strftime("%Y-%m-%d"),
     )
     db.add(user)
+    db.flush()
+    memberships.add(db, user, tenant.id, "Owner")
     db.commit()
     db.refresh(user)
     audit.record(db, action="signup", entity="User", entity_id=user.id, tenant_id=tenant.id, user_id=user.id, request=request)
@@ -146,8 +151,12 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
                             headers={"WWW-Authenticate": "Bearer"})
     if user.status != "active":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+    membership = memberships.default_for(db, user)
+    if membership is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You aren't an active member of any workspace.")
 
     ratelimit.reset(limit_key)
+    memberships.remember(db, user, membership)
     token = _start_session(db, user, request, response)
     audit.record(db, action="login", entity="User", entity_id=user.id, tenant_id=user.tenant_id, user_id=user.id, request=request)
     return token
@@ -279,31 +288,114 @@ def _open_invitation(db: Session, token: str) -> Invitation:
 def preview_invitation(token: str, db: Session = Depends(get_db)):
     invitation = _open_invitation(db, token)
     tenant = db.query(Tenant).filter(Tenant.id == invitation.tenant_id).first()
-    return InvitationPreviewOut(email=invitation.email, role=invitation.role,
-                                tenant_name=tenant.name if tenant else "", expires_at=invitation.expires_at)
+    existing = db.query(User.id).filter(User.email == invitation.email).first() is not None
+    return InvitationPreviewOut(email=invitation.email, role=invitation.role, tenant_name=tenant.name if tenant else "",
+                                expires_at=invitation.expires_at, existing_account=existing)
 
 
 @router.post("/invitations/accept", response_model=AccessTokenOut)
 def accept_invitation(payload: AcceptInvitationIn, request: Request, response: Response, db: Session = Depends(get_db)):
     invitation = _open_invitation(db, payload.token)
-    if db.query(User).filter(User.email == invitation.email).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="An account with this email already exists. Each account belongs to one workspace for now.")
     now = utcnow()
-    user = User(
-        email=invitation.email,
-        name=payload.name.strip(),
-        hashed_password=get_password_hash(payload.password),
-        role=invitation.role,
-        status="active",
-        tenant_id=invitation.tenant_id,
-        joined=now.strftime("%Y-%m-%d"),
-        email_verified_at=now,  # the invitation link was delivered to this address
-    )
-    db.add(user)
+    user = db.query(User).filter(User.email == invitation.email).first()
+    if user is not None:
+        # Joining another workspace with an existing account: the invitation link plus that account's password.
+        limit_key = f"login:{audit.client_ip(request)}:{user.email}"
+        if ratelimit.is_limited(limit_key, LOGIN_FAILURE_LIMIT, LOGIN_WINDOW_SECONDS):
+            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many failed attempts. Try again in 15 minutes.")
+        if not verify_password(payload.password, user.hashed_password):
+            ratelimit.hit(limit_key, LOGIN_WINDOW_SECONDS)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="That isn't the password for this account.")
+        if user.status != "active":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+        memberships.ensure_home(db, user)
+        if memberships.active(db, user.id, invitation.tenant_id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="You're already a member of this workspace.")
+        ratelimit.reset(limit_key)
+        user.email_verified_at = user.email_verified_at or now
+    else:
+        name = (payload.name or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="name: Enter your name")
+        if len(payload.password) < 10:
+            raise HTTPException(status_code=422, detail="password: Use at least 10 characters")
+        user = User(
+            email=invitation.email,
+            name=name,
+            hashed_password=get_password_hash(payload.password),
+            role=invitation.role,
+            status="active",
+            tenant_id=invitation.tenant_id,
+            joined=now.strftime("%Y-%m-%d"),
+            email_verified_at=now,  # the invitation link was delivered to this address
+        )
+        db.add(user)
+        db.flush()
+    membership = memberships.add(db, user, invitation.tenant_id, invitation.role)
     invitation.accepted_at = now
+    db.flush()
+    memberships.remember(db, user, membership)
     db.commit()
     db.refresh(user)
     audit.record(db, action="invitation_accepted", entity="Invitation", entity_id=invitation.id,
                  tenant_id=invitation.tenant_id, user_id=user.id, request=request)
     return _start_session(db, user, request, response)
+
+
+# --- Workspaces ------------------------------------------------------------------------------------
+MAX_OWNED_WORKSPACES = 20
+
+
+@router.get("/workspaces", response_model=List[AccountWorkspaceOut])
+def list_workspaces(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The workspaces this account can work in; `current` is the one this device is in."""
+    from app.models.membership import Membership
+    rows = (db.query(Membership, Tenant).join(Tenant, Tenant.id == Membership.tenant_id)
+            .filter(Membership.user_id == current_user.id, Membership.status == "active")
+            .order_by(Tenant.name).all())
+    return [AccountWorkspaceOut(id=t.id, name=t.name, role=m.role, current=t.id == current_user.tenant_id) for m, t in rows]
+
+
+def _switch(db: Session, request: Request, user: User, tenant_id: str) -> AccessTokenOut:
+    membership = memberships.active(db, user.id, tenant_id)
+    if membership is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workspace not found")
+    session = db.query(AuthSession).filter(AuthSession.id == _current_sid(request)).first()
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not signed in")
+    session.tenant_id = tenant_id
+    memberships.remember(db, user, membership)
+    db.commit()
+    from app.services.auth_service import issue_access_token
+    return AccessTokenOut(access_token=issue_access_token(user, session))
+
+
+@router.post("/workspaces/switch", response_model=AccessTokenOut)
+def switch_workspace(payload: WorkspaceSwitchIn, request: Request, current_user: User = Depends(get_current_user),
+                     db: Session = Depends(get_db)):
+    """Move this device to another of the account's workspaces. Other devices stay where they are.
+    The refresh cookie keeps working; use the returned access token from now on."""
+    previous = current_user.tenant_id
+    token = _switch(db, request, current_user, payload.tenant_id)
+    audit.record(db, action="workspace_switched", entity="Tenant", entity_id=payload.tenant_id, tenant_id=payload.tenant_id,
+                 user_id=current_user.id, details={"from": previous}, request=request)
+    return token
+
+
+@router.post("/workspaces", response_model=AccessTokenOut, status_code=status.HTTP_201_CREATED)
+def create_workspace(payload: WorkspaceCreateIn, request: Request, current_user: User = Depends(get_current_user),
+                     db: Session = Depends(get_db)):
+    """A new workspace with this account as its Owner; this device switches to it."""
+    from app.models.membership import Membership
+    owned = db.query(Membership.id).filter(Membership.user_id == current_user.id, Membership.role == "Owner").count()
+    if owned >= MAX_OWNED_WORKSPACES:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"You can own at most {MAX_OWNED_WORKSPACES} workspaces.")
+    tenant = Tenant(name=payload.name.strip())
+    db.add(tenant)
+    db.flush()
+    memberships.add(db, current_user, tenant.id, "Owner")
+    db.commit()
+    audit.record(db, action="workspace_created", entity="Tenant", entity_id=tenant.id, tenant_id=tenant.id,
+                 user_id=current_user.id, request=request)
+    return _switch(db, request, current_user, tenant.id)
+

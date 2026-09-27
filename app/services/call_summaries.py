@@ -89,8 +89,9 @@ def recipients(db: Session, tenant_id: str, cfg: SummarySettings, phone: str | N
         lead = workflow_events.find_lead(db, tenant_id, phone)
         if lead and lead.assigned_user_id:
             user_ids.append(lead.assigned_user_id)
-    emails = [u.email.lower() for u in db.query(User).filter(User.id.in_(user_ids), User.tenant_id == tenant_id,
-                                                              User.status == "active")] if user_ids else []
+    from app.services import memberships
+    emails = [u.email.lower() for u, _ in memberships.members(db, tenant_id, active_only=True)
+              .filter(User.id.in_(user_ids))] if user_ids else []
     return list(dict.fromkeys(emails + cfg.emails))
 
 

@@ -24,7 +24,6 @@ from app.models.auth import Invitation
 from app.models.call import CallLog
 from app.models.notification import Notification
 from app.models.tenant import Tenant
-from app.models.user import User
 from app.services import billing
 
 logger = logging.getLogger("plan-limits")
@@ -70,7 +69,8 @@ def minutes_used(db: Session, tenant_id: str, now: datetime | None = None) -> in
 
 def members_count(db: Session, tenant_id: str) -> int:
     """Active members plus pending invitations, so invitations can't get past the limit."""
-    active = db.query(func.count(User.id)).filter(User.tenant_id == tenant_id, User.status == "active").scalar()
+    from app.services import memberships
+    active = memberships.count_active(db, tenant_id)
     pending = db.query(func.count(Invitation.id)).filter(
         Invitation.tenant_id == tenant_id, Invitation.accepted_at.is_(None), Invitation.revoked_at.is_(None),
         Invitation.expires_at > _now()).scalar()
@@ -151,8 +151,8 @@ def check_alerts(now: datetime | None = None) -> int:
                 Notification.created_at >= month_start(now)).first()
             if already:
                 continue
-            admins = db.query(User).filter(User.tenant_id == tenant.id, User.status == "active",
-                                           User.role.in_(("Owner", "Admin"))).all()
+            from app.services import memberships
+            admins = memberships.member_users(db, tenant.id, roles=("Owner", "Admin"))
             if level == "limit":
                 title = f"All {limit:,} call minutes for this month are used"
                 body = "Outbound calls and campaigns are paused until next month; inbound calls are still answered."

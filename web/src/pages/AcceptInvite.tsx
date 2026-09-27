@@ -7,7 +7,7 @@ import { clearSession, startSession } from '../lib/session'
 import AuthLayout, { AuthField, AuthSubmit } from '../components/auth/AuthLayout'
 import { authLinkStyle } from '../components/auth/styles'
 
-interface InvitationPreview { email: string; role: string; tenant_name: string; expires_at: string }
+interface InvitationPreview { email: string; role: string; tenant_name: string; expires_at: string; existing_account?: boolean }
 
 export default function AcceptInvite() {
   const navigate = useNavigate()
@@ -31,7 +31,7 @@ export default function AcceptInvite() {
     setLoading(true)
     try {
       clearSession()
-      const { access_token } = await api.post<{ access_token: string }>('/api/auth/invitations/accept', { token, name, password })
+      const { access_token } = await api.post<{ access_token: string }>('/api/auth/invitations/accept', invite?.existing_account ? { token, password } : { token, name, password })
       await startSession(access_token)
       toast.success(`Welcome to ${invite?.tenant_name ?? 'aVn'}!`)
       navigate('/', { replace: true })
@@ -54,10 +54,22 @@ export default function AcceptInvite() {
         <p style={{ fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center' }}>Checking invitation…</p>
       ) : (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <AuthField id="name" label="Your name" icon={User} required autoComplete="name"
-            value={name} onChange={e => setName(e.target.value)} />
-          <AuthField id="password" label="Choose a password (10+ characters)" icon={Lock} type="password" required minLength={10}
-            autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
+          {invite.existing_account ? (
+            <>
+              <p style={{ fontSize: 13.5, color: 'var(--color-text-muted)', margin: 0 }}>
+                You already have an aVn account. Enter its password to add {invite.tenant_name} to your workspaces.
+              </p>
+              <AuthField id="password" label="Your aVn password" icon={Lock} type="password" required
+                autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
+            </>
+          ) : (
+            <>
+              <AuthField id="name" label="Your name" icon={User} required autoComplete="name"
+                value={name} onChange={e => setName(e.target.value)} />
+              <AuthField id="password" label="Choose a password (10+ characters)" icon={Lock} type="password" required minLength={10}
+                autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
+            </>
+          )}
           <AuthSubmit loading={loading} label="Join workspace" loadingLabel="Joining…" />
         </form>
       )}

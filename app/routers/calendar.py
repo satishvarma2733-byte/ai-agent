@@ -114,7 +114,8 @@ def finish_connect(provider: str, request: Request, code: str = "", state: str =
         return back("error", "Access wasn't granted." if error == "access_denied" else f"{impl.label} returned: {error or 'no code'}")
     bind_session_to_tenant(db, data["t"])
     user = db.get(User, data["u"])
-    if user is None or user.tenant_id != data["t"] or user.status != "active":
+    from app.services import memberships
+    if user is None or not memberships.is_active_member(db, user.id, data["t"]):
         return back("error", "Your account can no longer connect calendars.")
     try:
         account = impl.connect(code, calendar_sync.redirect_uri(provider, _request_base(request)), dict(request.query_params))

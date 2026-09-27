@@ -15,7 +15,8 @@ def mentioned_users(db: Session, tenant_id: str, text: str) -> list[User]:
     tokens = {m.group(1).rstrip(".").lower() for m in _MENTION.finditer(text or "")}
     if not tokens:
         return []
-    members = db.query(User).filter(User.tenant_id == tenant_id, User.status == "active").all()
+    from app.services import memberships
+    members = memberships.member_users(db, tenant_id)
     found: dict[str, User] = {}
     for token in tokens:
         matches = [u for u in members if token in {

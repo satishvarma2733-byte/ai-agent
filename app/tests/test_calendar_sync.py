@@ -152,7 +152,8 @@ class TestConnecting(CalendarTestCase):
         owner = _TenantClient(self.client)
         url = owner.post("/api/integrations/calendar/google/connect").json()["url"]
         state = parse_qs(urlparse(url).query)["state"][0]
-        for params in ({"code": "good-code", "state": state[:-2] + "00"},
+        tampered = state[:-1] + ("1" if state[-1] != "1" else "2")  # always a different signature
+        for params in ({"code": "good-code", "state": tampered},
                        {"code": "good-code", "state": "garbage"}):
             res = self.client.get("/api/integrations/calendar/google/callback", params=params, follow_redirects=False)
             self.assertIn("result=error", res.headers["location"])

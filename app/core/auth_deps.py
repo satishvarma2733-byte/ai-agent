@@ -38,13 +38,23 @@ def get_current_user(
         raise credentials_exception
 
     # Logged-out or revoked sessions stop working immediately, not when the JWT expires.
-    from app.services.auth_service import session_is_active
-    if not session_is_active(db, session_id):
+    from app.services import memberships
+    from app.services.auth_service import active_session
+    session = active_session(db, session_id)
+    if session is None:
         raise credentials_exception
 
     user = db.query(User).filter(User.email == email).first()
-    if user is None:
+    if user is None or session.user_id != user.id:
         raise credentials_exception
+
+    # The request works in its session's workspace, with the person's role there.
+    membership = memberships.get(db, user.id, session.tenant_id)
+    if membership is None:
+        raise credentials_exception
+    if membership.status != "active":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your access to this workspace is paused.")
+    memberships.apply_workspace(user, membership)
 
     if user.status != "active":
         raise HTTPException(

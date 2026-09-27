@@ -26,7 +26,9 @@ def _assignee(db: Session, tenant_id: str, user_id: str | None) -> User | None:
     """The member a lead is assigned to; must be an active member of the same workspace."""
     if not user_id:
         return None
-    member = db.query(User).filter(User.id == user_id, User.tenant_id == tenant_id, User.status == "active").first()
+    from app.services import memberships
+    row = memberships.members(db, tenant_id, active_only=True).filter(User.id == user_id).first()
+    member = row[0] if row else None
     if member is None:
         raise HTTPException(status_code=422, detail="Leads can only be assigned to an active member of this workspace.")
     return member

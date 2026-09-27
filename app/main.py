@@ -74,6 +74,9 @@ try:
             joined=now.strftime("%Y-%m-%d"),
             email_verified_at=now.replace(tzinfo=None),
         ))
+        db.flush()
+        from app.services import memberships
+        memberships.ensure_home(db, db.query(User).filter(User.email == seed_email).one())
         db.commit()
 except Exception as e:
     logger.error(f"Error seeding database: {e}")

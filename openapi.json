@@ -2,16 +2,23 @@
   "components": {
     "schemas": {
       "AcceptInvitationIn": {
+        "description": "New to aVn: a name and a new password (10+ characters). Already has an account: that account's password.",
         "properties": {
           "name": {
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           },
           "password": {
             "maxLength": 128,
-            "minLength": 10,
+            "minLength": 1,
             "title": "Password",
             "type": "string"
           },
@@ -24,7 +31,6 @@
         },
         "required": [
           "token",
-          "name",
           "password"
         ],
         "title": "AcceptInvitationIn",
@@ -47,6 +53,41 @@
           "access_token"
         ],
         "title": "AccessTokenOut",
+        "type": "object"
+      },
+      "AccountWorkspaceOut": {
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "Owner",
+              "Admin",
+              "Manager",
+              "Agent",
+              "Viewer"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "current"
+        ],
+        "title": "AccountWorkspaceOut",
         "type": "object"
       },
       "ActivityItem": {
@@ -2933,6 +2974,11 @@
           "email": {
             "title": "Email",
             "type": "string"
+          },
+          "existing_account": {
+            "default": false,
+            "title": "Existing Account",
+            "type": "boolean"
           },
           "expires_at": {
             "format": "date-time",
@@ -6832,6 +6878,21 @@
         "title": "WorkflowOut",
         "type": "object"
       },
+      "WorkspaceCreateIn": {
+        "properties": {
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WorkspaceCreateIn",
+        "type": "object"
+      },
       "WorkspaceOut": {
         "properties": {
           "id": {
@@ -6858,6 +6919,21 @@
           "status"
         ],
         "title": "WorkspaceOut",
+        "type": "object"
+      },
+      "WorkspaceSwitchIn": {
+        "properties": {
+          "tenant_id": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ],
+        "title": "WorkspaceSwitchIn",
         "type": "object"
       },
       "WorkspaceUpdate": {
@@ -9156,6 +9232,129 @@
           }
         ],
         "summary": "Resend Verification",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/workspaces": {
+      "get": {
+        "description": "The workspaces this account can work in; `current` is the one this device is in.",
+        "operationId": "list_workspaces_api_auth_workspaces_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountWorkspaceOut"
+                  },
+                  "title": "Response List Workspaces Api Auth Workspaces Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Workspaces",
+        "tags": [
+          "Authentication"
+        ]
+      },
+      "post": {
+        "description": "A new workspace with this account as its Owner; this device switches to it.",
+        "operationId": "create_workspace_api_auth_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Workspace",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/workspaces/switch": {
+      "post": {
+        "description": "Move this device to another of the account's workspaces. Other devices stay where they are.\nThe refresh cookie keeps working; use the returned access token from now on.",
+        "operationId": "switch_workspace_api_auth_workspaces_switch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSwitchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Switch Workspace",
         "tags": [
           "Authentication"
         ]
@@ -13595,7 +13794,7 @@
     },
     "/api/team/members/{user_id}": {
       "delete": {
-        "description": "Remove someone from the workspace. Their leads become unassigned; their history stays (without their name).",
+        "description": "Remove someone from the workspace. Their leads and tasks here become unassigned; their history stays.\nAn account that belongs to no other workspace is deleted (without their name on the history).",
         "operationId": "remove_member_api_team_members__user_id__delete",
         "parameters": [
           {

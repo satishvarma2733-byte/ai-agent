@@ -14,7 +14,8 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.services.mailer import deliver
 from app.schemas.auth import InvitationCreate, InvitationCreatedOut, InvitationOut, MemberOut, MemberUpdate, OwnershipTransferIn
-from app.services import audit
+from app.models.membership import Membership
+from app.services import audit, memberships
 from app.services.auth_service import INVITATION_TTL, revoke_all_sessions, utcnow
 
 router = APIRouter(prefix="/api/team", tags=["Team"])
@@ -22,12 +23,21 @@ router = APIRouter(prefix="/api/team", tags=["Team"])
 require_admin = RoleChecker(["Admin"])
 
 
-def _member_out(user: User) -> MemberOut:
+def _member_out(user: User, membership: Membership) -> MemberOut:
+    """Role and status are the person's in this workspace; a disabled account shows as inactive everywhere."""
     return MemberOut(
-        id=user.id, name=user.name, email=user.email, role=user.role, status=user.status,
-        phone=user.phone, joined=user.joined, last_seen=user.last_seen,
-        email_verified=user.email_verified_at is not None,
+        id=user.id, name=user.name, email=user.email, role=membership.role,
+        status="active" if membership.status == "active" and user.status == "active" else "inactive",
+        phone=user.phone, joined=membership.created_at.strftime("%Y-%m-%d") if membership.created_at else user.joined,
+        last_seen=user.last_seen, email_verified=user.email_verified_at is not None,
     )
+
+
+def _get_member(db: Session, user_id: str, tenant_id: str) -> tuple[User, Membership]:
+    row = memberships.members(db, tenant_id).filter(User.id == user_id).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+    return row[0], row[1]
 
 
 def _invitation_out(inv: Invitation) -> InvitationOut:
@@ -36,8 +46,8 @@ def _invitation_out(inv: Invitation) -> InvitationOut:
 
 @router.get("/members", response_model=List[MemberOut])
 def list_members(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    users = db.query(User).filter(User.tenant_id == current_user.tenant_id).order_by(User.created_at).all()
-    return [_member_out(u) for u in users]
+    rows = memberships.members(db, current_user.tenant_id).order_by(Membership.created_at).all()
+    return [_member_out(u, m) for u, m in rows]
 
 
 @router.patch("/members/{user_id}", response_model=MemberOut)
@@ -48,35 +58,35 @@ def update_member(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    member = db.query(User).filter(User.id == user_id, User.tenant_id == current_user.tenant_id).first()
-    if member is None:
-        raise HTTPException(status_code=404, detail="Member not found")
+    member, membership = _get_member(db, user_id, current_user.tenant_id)
     if member.id == current_user.id:
         raise HTTPException(status_code=400, detail="You can't change your own role or status.")
-    if member.role == "Owner":
+    if membership.role == "Owner":
         raise HTTPException(status_code=403, detail="The workspace owner can't be changed.")
-    if rank(member.role) > rank(current_user.role):
+    if rank(membership.role) > rank(current_user.role):
         raise HTTPException(status_code=403, detail="You can't change someone with a higher role than yours.")
 
     changes: dict[str, dict[str, str]] = {}
-    if payload.role is not None and payload.role != member.role:
+    if payload.role is not None and payload.role != membership.role:
         if payload.role not in ASSIGNABLE_ROLES:
             raise HTTPException(status_code=422, detail=f"Role must be one of: {', '.join(ASSIGNABLE_ROLES)}")
         if rank(payload.role) > rank(current_user.role):
             raise HTTPException(status_code=403, detail="You can't grant a role higher than your own.")
-        changes["role"] = {"from": member.role, "to": payload.role}
-        member.role = payload.role
-    if payload.status is not None and payload.status != member.status:
-        changes["status"] = {"from": member.status, "to": payload.status}
-        member.status = payload.status
+        changes["role"] = {"from": membership.role, "to": payload.role}
+        membership.role = payload.role
+        if member.tenant_id == current_user.tenant_id:
+            member.role = payload.role  # keep the remembered workspace's role in step
+    if payload.status is not None and payload.status != membership.status:
+        changes["status"] = {"from": membership.status, "to": payload.status}
+        membership.status = payload.status
     db.commit()
     if changes.get("status", {}).get("to") == "inactive" or "role" in changes:
-        # Access tokens carry the role; force a fresh sign-in so old privileges end now.
-        revoke_all_sessions(db, member.id)
+        # Access tokens carry the role; sign them out of this workspace so old privileges end now.
+        revoke_all_sessions(db, member.id, current_user.tenant_id)
     if changes:
         audit.record(db, action="member_updated", entity="User", entity_id=member.id,
                      tenant_id=current_user.tenant_id, user_id=current_user.id, details=changes, request=request)
-    return _member_out(member)
+    return _member_out(member, membership)
 
 
 def _detach_user(db: Session, user_id: str) -> None:
@@ -101,19 +111,35 @@ def remove_member(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    """Remove someone from the workspace. Their leads become unassigned; their history stays (without their name)."""
-    member = db.query(User).filter(User.id == user_id, User.tenant_id == current_user.tenant_id).first()
-    if member is None:
-        raise HTTPException(status_code=404, detail="Member not found")
+    """Remove someone from the workspace. Their leads and tasks here become unassigned; their history stays.
+    An account that belongs to no other workspace is deleted (without their name on the history)."""
+    member, membership = _get_member(db, user_id, current_user.tenant_id)
     if member.id == current_user.id:
         raise HTTPException(status_code=400, detail="You can't remove yourself.")
-    if member.role == "Owner":
+    if membership.role == "Owner":
         raise HTTPException(status_code=403, detail="The workspace owner can't be removed. Transfer ownership first.")
-    if rank(member.role) > rank(current_user.role):
+    if rank(membership.role) > rank(current_user.role):
         raise HTTPException(status_code=403, detail="You can't remove someone with a higher role than yours.")
-    details = {"email": member.email, "role": member.role}
-    _detach_user(db, member.id)
-    db.delete(member)
+    details = {"email": member.email, "role": membership.role}
+    others = db.query(Membership).filter(Membership.user_id == member.id, Membership.tenant_id != current_user.tenant_id)
+    if others.first() is None:
+        _detach_user(db, member.id)
+        db.delete(member)
+    else:
+        from app.models.auth import AuthSession
+        from app.models.lead import Lead
+        from app.models.task import Task
+        tid = current_user.tenant_id
+        db.query(Lead).filter(Lead.tenant_id == tid, Lead.assigned_user_id == member.id).update(
+            {Lead.assigned_user_id: None}, synchronize_session=False)
+        db.query(Task).filter(Task.tenant_id == tid, Task.assigned_user_id == member.id).update(
+            {Task.assigned_user_id: None}, synchronize_session=False)
+        db.query(AuthSession).filter(AuthSession.user_id == member.id, AuthSession.tenant_id == tid).update(
+            {AuthSession.revoked_at: utcnow()}, synchronize_session=False)
+        db.delete(membership)
+        if member.tenant_id == tid:  # their next sign-in starts in a workspace they still belong to
+            nxt = others.filter(Membership.status == "active").order_by(Membership.created_at).first() or others.first()
+            member.tenant_id, member.role = nxt.tenant_id, nxt.role
     db.commit()
     audit.record(db, action="member_removed", entity="User", entity_id=user_id, tenant_id=current_user.tenant_id,
                  user_id=current_user.id, details=details, request=request)
@@ -127,19 +153,26 @@ def transfer_ownership(
     current_user: User = Depends(RoleChecker(["Owner"])),
 ):
     """Make another active member the Owner; the current Owner becomes an Admin."""
-    member = db.query(User).filter(User.id == payload.user_id, User.tenant_id == current_user.tenant_id).first()
-    if member is None or member.id == current_user.id:
+    row = memberships.members(db, current_user.tenant_id).filter(User.id == payload.user_id).first()
+    if row is None or payload.user_id == current_user.id:
         raise HTTPException(status_code=404, detail="Member not found")
-    if member.status != "active":
+    member, membership = row
+    if membership.status != "active" or member.status != "active":
         raise HTTPException(status_code=400, detail="Ownership can only go to an active member.")
-    previous_role = member.role
-    member.role = "Owner"
-    current_user.role = "Admin"
+    previous_role = membership.role
+    membership.role = "Owner"
+    mine = memberships.get(db, current_user.id, current_user.tenant_id)
+    mine.role = "Admin"
+    if member.tenant_id == current_user.tenant_id:
+        member.role = "Owner"
+    db.query(User).filter(User.id == current_user.id, User.tenant_id == current_user.tenant_id).update(
+        {User.role: "Admin"}, synchronize_session=False)
     db.commit()
-    revoke_all_sessions(db, member.id)  # their next sign-in carries the new role
+    memberships.apply_workspace(current_user, mine)
+    revoke_all_sessions(db, member.id, current_user.tenant_id)  # their next sign-in here carries the new role
     audit.record(db, action="ownership_transferred", entity="User", entity_id=member.id, tenant_id=current_user.tenant_id,
                  user_id=current_user.id, details={"from_user": current_user.id, "previous_role": previous_role}, request=request)
-    return _member_out(member)
+    return _member_out(member, membership)
 
 
 @router.get("/invitations", response_model=List[InvitationOut])
@@ -165,8 +198,9 @@ def create_invitation(
         raise HTTPException(status_code=422, detail=f"Role must be one of: {', '.join(ASSIGNABLE_ROLES)}")
     if rank(payload.role) > rank(current_user.role):
         raise HTTPException(status_code=403, detail="You can't invite someone with a role higher than your own.")
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(status_code=409, detail="This email already has an aVn account.")
+    existing = db.query(User).filter(User.email == email).first()
+    if existing is not None and memberships.get(db, existing.id, current_user.tenant_id) is not None:
+        raise HTTPException(status_code=409, detail="This person is already a member of this workspace.")
     from app.services import plan_limits
     pending_same = db.query(Invitation.id).filter(
         Invitation.tenant_id == current_user.tenant_id, Invitation.email == email,

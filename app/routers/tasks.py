@@ -56,7 +56,9 @@ def _now() -> datetime:
 def _member(db: Session, tenant_id: str, user_id: Optional[str]) -> Optional[User]:
     if not user_id:
         return None
-    user = db.query(User).filter(User.id == user_id, User.tenant_id == tenant_id, User.status == "active").first()
+    from app.services import memberships
+    row = memberships.members(db, tenant_id, active_only=True).filter(User.id == user_id).first()
+    user = row[0] if row else None
     if user is None:
         raise HTTPException(status_code=422, detail="Assign the task to an active member of this workspace.")
     return user

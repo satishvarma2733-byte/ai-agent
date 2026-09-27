@@ -742,6 +742,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workspaces
+         * @description The workspaces this account can work in; `current` is the one this device is in.
+         */
+        get: operations["list_workspaces_api_auth_workspaces_get"];
+        put?: never;
+        /**
+         * Create Workspace
+         * @description A new workspace with this account as its Owner; this device switches to it.
+         */
+        post: operations["create_workspace_api_auth_workspaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/workspaces/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Switch Workspace
+         * @description Move this device to another of the account's workspaces. Other devices stay where they are.
+         *     The refresh cookie keeps working; use the returned access token from now on.
+         */
+        post: operations["switch_workspace_api_auth_workspaces_switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/billing": {
         parameters: {
             query?: never;
@@ -2429,7 +2474,8 @@ export interface paths {
         post?: never;
         /**
          * Remove Member
-         * @description Remove someone from the workspace. Their leads become unassigned; their history stays (without their name).
+         * @description Remove someone from the workspace. Their leads and tasks here become unassigned; their history stays.
+         *     An account that belongs to no other workspace is deleted (without their name on the history).
          */
         delete: operations["remove_member_api_team_members__user_id__delete"];
         options?: never;
@@ -2635,10 +2681,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** AcceptInvitationIn */
+        /**
+         * AcceptInvitationIn
+         * @description New to aVn: a name and a new password (10+ characters). Already has an account: that account's password.
+         */
         AcceptInvitationIn: {
             /** Name */
-            name: string;
+            name?: string | null;
             /** Password */
             password: string;
             /** Token */
@@ -2656,6 +2705,20 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+        };
+        /** AccountWorkspaceOut */
+        AccountWorkspaceOut: {
+            /** Current */
+            current: boolean;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "Owner" | "Admin" | "Manager" | "Agent" | "Viewer";
         };
         /** ActivityItem */
         ActivityItem: {
@@ -3767,6 +3830,11 @@ export interface components {
         InvitationPreviewOut: {
             /** Email */
             email: string;
+            /**
+             * Existing Account
+             * @default false
+             */
+            existing_account: boolean;
             /**
              * Expires At
              * Format: date-time
@@ -5003,6 +5071,11 @@ export interface components {
             /** Trigger Event */
             trigger_event: string;
         };
+        /** WorkspaceCreateIn */
+        WorkspaceCreateIn: {
+            /** Name */
+            name: string;
+        };
         /** WorkspaceOut */
         WorkspaceOut: {
             /** Id */
@@ -5013,6 +5086,11 @@ export interface components {
             plan: string;
             /** Status */
             status: string;
+        };
+        /** WorkspaceSwitchIn */
+        WorkspaceSwitchIn: {
+            /** Tenant Id */
+            tenant_id: string;
         };
         /** WorkspaceUpdate */
         WorkspaceUpdate: {
@@ -6469,6 +6547,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_workspaces_api_auth_workspaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountWorkspaceOut"][];
+                };
+            };
+        };
+    };
+    create_workspace_api_auth_workspaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessTokenOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switch_workspace_api_auth_workspaces_switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceSwitchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessTokenOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
