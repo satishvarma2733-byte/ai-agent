@@ -17,7 +17,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5193,
     strictPort: true,
     proxy: {
       // Proxy /api and /health to the backend during dev
@@ -28,7 +28,7 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5193,
     strictPort: true,
   },
 })

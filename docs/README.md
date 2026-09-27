@@ -18,5 +18,5 @@ To create the frontend:
 4. Copy the full prompt from [ui-agent-prompt.md](ui-agent-prompt.md).
 5. Paste it into a coding agent.
 6. Tell the agent: `Use this prompt to build the actual frontend application now. Do not just explain the instructions. Create the files, install the packages, and make it runnable.`
-7. Tell it to use Vite on port `5173`.
+7. Tell it to use Vite on port `5193`.
 8. Point the generated frontend to the backend API URL with `VITE_API_BASE_URL`.

@@ -608,7 +608,7 @@ Use this prompt to build the actual frontend application now. Do not just explai
 
 ```text
 Use Vite + React + TypeScript + Tailwind CSS.
-Use port 5173.
+Use port 5193.
 Use VITE_API_BASE_URL for the backend URL.
 ```
 
@@ -634,7 +634,7 @@ npm run dev
 Open:
 
 ```text
-http://127.0.0.1:5173
+http://127.0.0.1:5193
 ```
 
 ## Step 13: Deploy Frontend On Coolify
@@ -646,8 +646,8 @@ Use these settings:
 ```text
 Install command: npm ci
 Build command: npm run build
-Start command: npm run preview -- --host 0.0.0.0 --port 5173
-Public port: 5173
+Start command: npm run preview -- --host 0.0.0.0 --port 5193
+Public port: 5193
 ```
 
 Set:
@@ -693,7 +693,7 @@ Backend:
 Frontend:
 
 - Built with Vite.
-- Runs on port `5173`.
+- Runs on port `5193`.
 - `VITE_API_BASE_URL` points to backend.
 
 Coolify:
@@ -701,7 +701,7 @@ Coolify:
 - Backend public port is `8000`.
 - Backend health path is `/health`.
 - Backend storage is `/app/data`.
-- Frontend public port is `5173`.
+- Frontend public port is `5193`.
 
 ## Tiny Troubleshooting
 

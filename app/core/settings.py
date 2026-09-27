@@ -12,7 +12,7 @@ load_dotenv()
 _LOCAL_DEV_SECRET_KEY = "local-dev-only-secret-do-not-use-in-production"
 # Zero-config local runs use the SQLite file; set DATABASE_URL for Postgres (docker compose).
 _LOCAL_DATABASE_URL = "sqlite:///./avnagent.db"
-_LOCAL_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+_LOCAL_CORS_ORIGINS = "http://localhost:5193,http://127.0.0.1:5193"
 
 
 class Settings(BaseSettings):
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     @property
     def frontend_base_url(self) -> str:
-        return (self.frontend_url or ("http://localhost:5173" if self.is_local else "")).rstrip("/")
+        return (self.frontend_url or ("http://localhost:5193" if self.is_local else "")).rstrip("/")
 
     @property
     def signup_limit(self) -> int:

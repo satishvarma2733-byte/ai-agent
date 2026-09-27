@@ -35,7 +35,7 @@ Replace `http://localhost:8000` with the actual URL where your aVn Agent backend
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open [http://localhost:5193](http://localhost:5193)
 
 ---
 
@@ -43,9 +43,9 @@ Open [http://localhost:5173](http://localhost:5173)
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start dev server on `0.0.0.0:5173` |
+| `npm run dev` | Start dev server on `0.0.0.0:5193` |
 | `npm run build` | Build production bundle to `dist/` |
-| `npm run preview` | Serve production build on `0.0.0.0:5173` |
+| `npm run preview` | Serve production build on `0.0.0.0:5193` |
 
 ---
 

@@ -252,7 +252,7 @@ def main() -> int:
     if not args.no_agent:
         print(f"[stack] Agent health: http://127.0.0.1:{agent_port}", flush=True)
     if not args.no_ui:
-        print(f"[stack] Frontend UI:  http://127.0.0.1:5173", flush=True)
+        print(f"[stack] Frontend UI:  http://127.0.0.1:5193", flush=True)
     try:
         while True:
             for name, process in procs:

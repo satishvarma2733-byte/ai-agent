@@ -100,7 +100,7 @@ http://127.0.0.1:8000
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-7. Tell the agent to use Vite on port `5173`.
+7. Tell the agent to use Vite on port `5193`.
 
 8. In the generated frontend folder, run:
 

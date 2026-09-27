@@ -26,7 +26,7 @@ The dashboard is not bundled in this repo. To build it, use `docs/ui-agent-promp
 2. Copy the full prompt.
 3. Paste it into a coding agent.
 4. Add: `Use this prompt to build the actual frontend application now. Do not just explain the instructions. Create the files, install the packages, and make it runnable.`
-5. Tell it to use Vite + React + TypeScript + Tailwind CSS on port `5173`.
+5. Tell it to use Vite + React + TypeScript + Tailwind CSS on port `5193`.
 6. Set the generated frontend API URL to `http://127.0.0.1:8000`.
 7. Set `VITE_API_BASE_URL=http://127.0.0.1:8000`.
 8. Run `npm install`.
@@ -39,7 +39,7 @@ The dashboard is not bundled in this repo. To build it, use `docs/ui-agent-promp
 3. Add persistent storage at `/app/data`.
 4. Add all env vars in Coolify.
 5. Deploy and verify `/health`.
-6. Deploy the generated Vite frontend as a separate app on port `5173` and set `VITE_API_BASE_URL` to the backend URL.
+6. Deploy the generated Vite frontend as a separate app on port `5193` and set `VITE_API_BASE_URL` to the backend URL.
 
 ## Gemini 3.1 Live defaults
 

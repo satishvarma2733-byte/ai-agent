@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5173",
+    "dev": "vite --host 0.0.0.0 --port 5193",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "preview": "vite preview --host 0.0.0.0 --port 5193",
     "gen:api": "npx -y openapi-typescript@7.13.0 ../openapi.json -o src/api/generated/schema.d.ts"
   },
   "dependencies": {

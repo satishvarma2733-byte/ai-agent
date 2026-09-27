@@ -78,13 +78,13 @@ Build with:
 
 - Vite + React + TypeScript + Tailwind CSS
 
-The local dev server must run on port `5173`.
+The local dev server must run on port `5193`.
 
 Use these script behaviors:
 
-- `npm run dev` starts Vite on `0.0.0.0:5173`
+- `npm run dev` starts Vite on `0.0.0.0:5193`
 - `npm run build` creates a production build in `dist`
-- `npm run preview` serves the production build on `0.0.0.0:5173`
+- `npm run preview` serves the production build on `0.0.0.0:5193`
 
 Use `VITE_API_BASE_URL` for the backend URL. Include it in the frontend `.env.example`.
 

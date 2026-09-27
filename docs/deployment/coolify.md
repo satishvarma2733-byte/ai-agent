@@ -130,8 +130,8 @@ For a Node/Vite frontend app in Coolify:
 
 - Install command: `npm ci`
 - Build command: `npm run build`
-- Start command: `npm run preview -- --host 0.0.0.0 --port 5173`
-- Public port: `5173`
+- Start command: `npm run preview -- --host 0.0.0.0 --port 5193`
+- Public port: `5193`
 
 If you deploy it as a static site, use:
 

@@ -61,7 +61,7 @@ To build the frontend:
 5. Copy the entire prompt.
 6. Paste it into a coding agent.
 7. Add: `Use this prompt to build the actual frontend application now. Do not just explain the instructions. Create the files, install the packages, and make it runnable.`
-8. Tell it to build Vite + React + TypeScript + Tailwind CSS on port `5173`.
+8. Tell it to build Vite + React + TypeScript + Tailwind CSS on port `5193`.
 9. Set `VITE_API_BASE_URL=http://127.0.0.1:8000` for local development.
 
 ## Coolify
