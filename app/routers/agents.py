@@ -1,6 +1,6 @@
-from typing import List
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
@@ -340,6 +340,7 @@ class TestCaseIn(BaseModel):
     caller_turns: List[str]
     must_include: List[str] = []
     must_not_include: List[str] = []
+    expected_language: Optional[Literal["en", "te", "hi", "ta", "kn", "ml"]] = None
 
 
 class TestCaseOut(TestCaseIn):
@@ -396,10 +397,11 @@ def create_test_case(agent_id: str, payload: TestCaseIn, db: Session = Depends(g
     if not payload.name.strip() or not turns:
         raise HTTPException(status_code=422, detail="Give the test a name and at least one thing the caller says.")
     must, must_not = _clean_list(payload.must_include, 10, "required phrases"), _clean_list(payload.must_not_include, 10, "forbidden phrases")
-    if not must and not must_not:
-        raise HTTPException(status_code=422, detail="Add at least one phrase the replies must or must not contain.")
+    if not must and not must_not and not payload.expected_language:
+        raise HTTPException(status_code=422, detail="Add a phrase the replies must or must not contain, or the language they must be in.")
     case = AgentTestCase(tenant_id=agent.tenant_id, agent_id=agent.id, name=payload.name.strip()[:150], caller_turns=turns,
-                         must_include=must, must_not_include=must_not, created_by=current_user.id,
+                         must_include=must, must_not_include=must_not, expected_language=payload.expected_language,
+                         created_by=current_user.id,
                          created_at=datetime.now(timezone.utc).replace(tzinfo=None))
     db.add(case)
     db.commit()
@@ -473,3 +475,61 @@ async def voice_test(agent_id: str, number: int, db: Session = Depends(get_db), 
                                                     load_runtime_config())
     except agent_testing.AgentTestError as exc:
         _studio_error(exc)
+
+
+# --- Copilot ---------------------------------------------------------------------------------------
+
+class CopilotIn(BaseModel):
+    request: str = Field(min_length=3, max_length=1000)
+
+
+class ConfigChangeOut(BaseModel):
+    path: str
+    before: Any = None
+    after: Any = None
+
+
+class CopilotProposalOut(BaseModel):
+    summary: str
+    patch: Dict[str, Any]
+    changes: List[ConfigChangeOut]
+    ignored: List[str]
+
+
+class CopilotApplyIn(BaseModel):
+    request: str = Field(min_length=3, max_length=1000)
+    patch: Dict[str, Any]
+
+
+@router.post("/{agent_id}/copilot", response_model=CopilotProposalOut)
+def copilot_propose(agent_id: str, payload: CopilotIn, db: Session = Depends(get_db),
+                    current_user: User = Depends(require_builder)):
+    """Turn a plain-language request into a proposed change to the agent's current configuration.
+    Nothing is saved; apply it with /copilot/apply."""
+    from app.core.runtime_config import load_runtime_config
+    from app.services import agent_copilot
+    agent = _get_agent(db, agent_id, current_user)
+    try:
+        return agent_copilot.propose(svc.current_config(db, agent), payload.request, load_runtime_config())
+    except agent_copilot.CopilotError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
+@router.post("/{agent_id}/copilot/apply", response_model=DraftPatchOut)
+def copilot_apply(agent_id: str, payload: CopilotApplyIn, db: Session = Depends(get_db),
+                  current_user: User = Depends(require_builder)):
+    """Apply a copilot proposal to the draft, logged as a copilot change with the request as the reason."""
+    from app.services import agent_copilot
+    agent = _get_agent(db, agent_id, current_user)
+    try:
+        preview = agent_copilot.check(svc.current_config(db, agent), payload.patch)
+    except agent_copilot.CopilotError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    if not preview["changes"]:
+        raise HTTPException(status_code=409, detail="That proposal doesn't change anything any more.")
+    try:
+        version, changes = svc.edit_draft(db, agent, current_user, preview["patch"], reason=f"Copilot: {payload.request}"[:500],
+                                          source="copilot")
+    except svc.AgentError as exc:
+        _raise(exc)
+    return DraftPatchOut(version=_version_out(version), changes=changes)

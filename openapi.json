@@ -611,6 +611,132 @@
         "title": "AgentUpdate",
         "type": "object"
       },
+      "ApiKeyCreatedOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "key"
+        ],
+        "title": "ApiKeyCreatedOut",
+        "type": "object"
+      },
+      "ApiKeyIn": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ApiKeyIn",
+        "type": "object"
+      },
+      "ApiKeyOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at"
+        ],
+        "title": "ApiKeyOut",
+        "type": "object"
+      },
       "AppointmentCreate": {
         "properties": {
           "contact_name": {
@@ -2280,6 +2406,105 @@
         "title": "ChangeOut",
         "type": "object"
       },
+      "ChatSessionOut": {
+        "properties": {
+          "agent_name": {
+            "title": "Agent Name",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lead_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Id"
+          },
+          "lead_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Name"
+          },
+          "messages": {
+            "title": "Messages",
+            "type": "integer"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/ChatTurnOut"
+            },
+            "title": "Turns",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "agent_name",
+          "messages",
+          "turns",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatSessionOut",
+        "type": "object"
+      },
+      "ChatTurnOut": {
+        "properties": {
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "text"
+        ],
+        "title": "ChatTurnOut",
+        "type": "object"
+      },
       "CheckoutIn": {
         "properties": {
           "plan_id": {
@@ -2321,6 +2546,25 @@
         "title": "ConfigChange",
         "type": "object"
       },
+      "ConfigChangeOut": {
+        "properties": {
+          "after": {
+            "title": "After"
+          },
+          "before": {
+            "title": "Before"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "ConfigChangeOut",
+        "type": "object"
+      },
       "ConnectOut": {
         "properties": {
           "url": {
@@ -2332,6 +2576,77 @@
           "url"
         ],
         "title": "ConnectOut",
+        "type": "object"
+      },
+      "CopilotApplyIn": {
+        "properties": {
+          "patch": {
+            "additionalProperties": true,
+            "title": "Patch",
+            "type": "object"
+          },
+          "request": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Request",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request",
+          "patch"
+        ],
+        "title": "CopilotApplyIn",
+        "type": "object"
+      },
+      "CopilotIn": {
+        "properties": {
+          "request": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Request",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "CopilotIn",
+        "type": "object"
+      },
+      "CopilotProposalOut": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ConfigChangeOut"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "ignored": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ignored",
+            "type": "array"
+          },
+          "patch": {
+            "additionalProperties": true,
+            "title": "Patch",
+            "type": "object"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "patch",
+          "changes",
+          "ignored"
+        ],
+        "title": "CopilotProposalOut",
         "type": "object"
       },
       "DayPoint": {
@@ -4465,6 +4780,35 @@
         "title": "ProfitabilityOut",
         "type": "object"
       },
+      "PublicChatOut": {
+        "properties": {
+          "ask_for_contact": {
+            "title": "Ask For Contact",
+            "type": "boolean"
+          },
+          "reply": {
+            "title": "Reply",
+            "type": "string"
+          },
+          "session": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session"
+          }
+        },
+        "required": [
+          "reply",
+          "ask_for_contact"
+        ],
+        "title": "PublicChatOut",
+        "type": "object"
+      },
       "RedirectOut": {
         "properties": {
           "url": {
@@ -5037,6 +5381,25 @@
             "title": "Caller Turns",
             "type": "array"
           },
+          "expected_language": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "te",
+                  "hi",
+                  "ta",
+                  "kn",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Language"
+          },
           "must_include": {
             "default": [],
             "items": {
@@ -5078,6 +5441,25 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "expected_language": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "te",
+                  "hi",
+                  "ta",
+                  "kn",
+                  "ml"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Language"
           },
           "id": {
             "title": "Id",
@@ -6047,6 +6429,253 @@
         "title": "WhatsAppStatusOut",
         "type": "object"
       },
+      "WidgetIn": {
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "allowed_origins": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Allowed Origins",
+            "type": "array"
+          },
+          "color": {
+            "default": "#7B61FF",
+            "title": "Color",
+            "type": "string"
+          },
+          "greeting": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Greeting"
+          },
+          "lead_capture": {
+            "default": true,
+            "title": "Lead Capture",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "voice_enabled": {
+            "default": false,
+            "title": "Voice Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "agent_id",
+          "allowed_origins"
+        ],
+        "title": "WidgetIn",
+        "type": "object"
+      },
+      "WidgetOut": {
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "agent_live": {
+            "title": "Agent Live",
+            "type": "boolean"
+          },
+          "agent_name": {
+            "title": "Agent Name",
+            "type": "string"
+          },
+          "allowed_origins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Origins",
+            "type": "array"
+          },
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "embed_code": {
+            "title": "Embed Code",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "greeting": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Greeting"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lead_capture": {
+            "title": "Lead Capture",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "public_key": {
+            "title": "Public Key",
+            "type": "string"
+          },
+          "voice_enabled": {
+            "title": "Voice Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "agent_id",
+          "agent_name",
+          "agent_live",
+          "public_key",
+          "allowed_origins",
+          "color",
+          "voice_enabled",
+          "lead_capture",
+          "enabled",
+          "embed_code",
+          "created_at"
+        ],
+        "title": "WidgetOut",
+        "type": "object"
+      },
+      "WidgetPatch": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
+          },
+          "allowed_origins": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Origins"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "greeting": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Greeting"
+          },
+          "lead_capture": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Capture"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "voice_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Enabled"
+          }
+        },
+        "title": "WidgetPatch",
+        "type": "object"
+      },
       "WorkflowAction": {
         "properties": {
           "config": {
@@ -6608,6 +7237,122 @@
           }
         ],
         "summary": "Compare Versions",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/copilot": {
+      "post": {
+        "description": "Turn a plain-language request into a proposed change to the agent's current configuration.\nNothing is saved; apply it with /copilot/apply.",
+        "operationId": "copilot_propose_api_agents__agent_id__copilot_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopilotProposalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Copilot Propose",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/agents/{agent_id}/copilot/apply": {
+      "post": {
+        "description": "Apply a copilot proposal to the draft, logged as a copilot change with the request as the reason.",
+        "operationId": "copilot_apply_api_agents__agent_id__copilot_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotApplyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftPatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Copilot Apply",
         "tags": [
           "Agents"
         ]
@@ -7626,6 +8371,121 @@
         ]
       }
     },
+    "/api/api-keys": {
+      "get": {
+        "operationId": "list_api_keys_api_api_keys_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyOut"
+                  },
+                  "title": "Response List Api Keys Api Api Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Api Keys",
+        "tags": [
+          "Website chat"
+        ]
+      },
+      "post": {
+        "description": "The key is shown only in this response.",
+        "operationId": "create_api_key_api_api_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreatedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Api Key",
+        "tags": [
+          "Website chat"
+        ]
+      }
+    },
+    "/api/api-keys/{key_id}": {
+      "delete": {
+        "operationId": "revoke_api_key_api_api_keys__key_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Revoke Api Key",
+        "tags": [
+          "Website chat"
+        ]
+      }
+    },
     "/api/appointments": {
       "get": {
         "description": "List scheduled customer appointments with range limits.",
@@ -8550,6 +9410,59 @@
         "summary": "Get Live Calls",
         "tags": [
           "Call Management"
+        ]
+      }
+    },
+    "/api/chat-sessions": {
+      "get": {
+        "description": "The most recent website and API conversations.",
+        "operationId": "list_chat_sessions_api_chat_sessions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatSessionOut"
+                  },
+                  "title": "Response List Chat Sessions Api Chat Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Chat Sessions",
+        "tags": [
+          "Website chat"
         ]
       }
     },
@@ -11959,6 +12872,88 @@
         ]
       }
     },
+    "/api/public/chat": {
+      "post": {
+        "description": "Send the visitor's message and get the agent's reply. Leave out `session` to start a conversation; the reply\ncarries its token, which later messages send back. API-key callers name the agent with `agent_id`.",
+        "operationId": "public_chat_message_api_public_chat_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicChatOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Chat Message",
+        "tags": [
+          "Public chat API"
+        ]
+      }
+    },
+    "/api/public/chat/contact": {
+      "post": {
+        "description": "The visitor's name and phone (and email), saved as a CRM lead with the conversation so far.",
+        "operationId": "public_chat_contact_api_public_chat_contact_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Chat Contact",
+        "tags": [
+          "Public chat API"
+        ]
+      }
+    },
+    "/api/public/voice": {
+      "post": {
+        "description": "Start a browser voice call with the agent (widgets with voice turned on).",
+        "operationId": "public_voice_api_public_voice_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Voice",
+        "tags": [
+          "Public chat API"
+        ]
+      }
+    },
+    "/api/public/widget": {
+      "get": {
+        "description": "What the widget shows before the first message. Widget key only.",
+        "operationId": "public_widget_config_api_public_widget_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Widget Config",
+        "tags": [
+          "Public chat API"
+        ]
+      }
+    },
     "/api/recordings/{filename}": {
       "get": {
         "description": "Serve a locally stored recording that belongs to one of the workspace's own calls, either to a signed-in\nmember or through the signed link that call logs carry (audio players can't send the access token).\nRecordings in the private storage bucket are redirected to a one-minute signed storage URL.",
@@ -12808,6 +13803,223 @@
         "summary": "List Messages",
         "tags": [
           "WhatsApp"
+        ]
+      }
+    },
+    "/api/widgets": {
+      "get": {
+        "operationId": "list_widgets_api_widgets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WidgetOut"
+                  },
+                  "title": "Response List Widgets Api Widgets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Widgets",
+        "tags": [
+          "Website chat"
+        ]
+      },
+      "post": {
+        "operationId": "create_widget_api_widgets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WidgetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Widget",
+        "tags": [
+          "Website chat"
+        ]
+      }
+    },
+    "/api/widgets/{widget_id}": {
+      "delete": {
+        "operationId": "delete_widget_api_widgets__widget_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "widget_id",
+            "required": true,
+            "schema": {
+              "title": "Widget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Widget",
+        "tags": [
+          "Website chat"
+        ]
+      },
+      "patch": {
+        "operationId": "update_widget_api_widgets__widget_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "widget_id",
+            "required": true,
+            "schema": {
+              "title": "Widget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WidgetPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Widget",
+        "tags": [
+          "Website chat"
+        ]
+      }
+    },
+    "/api/widgets/{widget_id}/rotate-key": {
+      "post": {
+        "description": "A new public key; the old embed code stops working.",
+        "operationId": "rotate_widget_key_api_widgets__widget_id__rotate_key_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "widget_id",
+            "required": true,
+            "schema": {
+              "title": "Widget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Rotate Widget Key",
+        "tags": [
+          "Website chat"
         ]
       }
     },

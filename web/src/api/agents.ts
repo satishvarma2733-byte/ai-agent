@@ -39,6 +39,9 @@ export const agentsApi = {
   deleteTestCase: (id: string, caseId: string) => api.delete<void>(`/api/agents/${id}/tests/${caseId}`),
   runTests: (id: string, number: number) => api.post<AgentTestRun>(`/api/agents/${id}/versions/${number}/test/run`),
   testRuns: (id: string, number: number) => api.get<AgentTestRun[]>(`/api/agents/${id}/versions/${number}/test/runs`),
+  copilot: (id: string, request: string) => api.post<Schema<'CopilotProposalOut'>>(`/api/agents/${id}/copilot`, { request }),
+  copilotApply: (id: string, request: string, patch: Record<string, unknown>) =>
+    api.post<Schema<'DraftPatchOut'>>(`/api/agents/${id}/copilot/apply`, { request, patch }),
   voiceTest: (id: string, number: number) =>
     api.post<{ url: string; token: string; room: string; version: number }>(`/api/agents/${id}/versions/${number}/test/voice`),
 }

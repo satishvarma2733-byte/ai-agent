@@ -17,6 +17,7 @@ class AgentTestCase(Base):
     caller_turns = Column(JSON, nullable=False)  # ["Hi, what are your timings?", "And on Sunday?"]
     must_include = Column(JSON, nullable=False, default=list)  # every phrase appears in some reply
     must_not_include = Column(JSON, nullable=False, default=list)  # no reply contains any of these
+    expected_language = Column(String(10), nullable=True)  # replies must be in this language's script
     created_by = Column(String(50), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, nullable=False)
 

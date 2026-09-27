@@ -48,6 +48,17 @@ def _script(ch: str) -> str | None:
     return None
 
 
+def share(text: str | None, lang: str) -> float:
+    """How much of the text's letters are in `lang`'s script (0 when there are no letters)."""
+    counts: dict[str, int] = {}
+    for ch in text or "":
+        found = _script(ch)
+        if found:
+            counts[found] = counts.get(found, 0) + 1
+    total = sum(counts.values())
+    return counts.get(lang, 0) / total if total else 0.0
+
+
 def detect(transcript: str | None) -> str:
     counts: dict[str, int] = {}
     for ch in _caller_text(transcript or ""):

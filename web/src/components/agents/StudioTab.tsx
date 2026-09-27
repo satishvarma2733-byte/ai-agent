@@ -5,6 +5,10 @@ import toast from 'react-hot-toast'
 import Button from '../ui/Button'
 import { agentsApi, type Agent, type AgentTestCase, type AgentTestRun, type AgentVersion, type TestTurn } from '../../api/agents'
 
+type TestLanguage = 'en' | 'te' | 'hi' | 'ta' | 'kn' | 'ml'
+// Languages a test can require: the ones the reply's script identifies.
+const LANGUAGE_NAMES: Record<TestLanguage, string> = { en: 'English', te: 'Telugu', hi: 'Hindi', ta: 'Tamil', kn: 'Kannada', ml: 'Malayalam' }
+
 const field = { width: '100%', padding: '7px 10px', fontSize: 12.5 } as const
 const label = { fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 } as const
 const lines = (text: string) => text.split(/\n/).map(t => t.trim()).filter(Boolean)
@@ -20,7 +24,7 @@ export default function StudioTab({ agent, versions, canBuild }: { agent: Agent;
   const [cases, setCases] = useState<AgentTestCase[]>([])
   const [run, setRun] = useState<AgentTestRun | null>(null)
   const [running, setRunning] = useState(false)
-  const [draft, setDraft] = useState({ name: '', caller: '', must: '', mustNot: '' })
+  const [draft, setDraft] = useState({ name: '', caller: '', must: '', mustNot: '', language: '' as '' | TestLanguage })
   const [voice, setVoice] = useState<'off' | 'connecting' | 'on'>('off')
   const roomRef = useRef<Room | null>(null)
   const audioRef = useRef<HTMLElement[]>([])
@@ -88,8 +92,8 @@ export default function StudioTab({ agent, versions, canBuild }: { agent: Agent;
   const addCase = async () => {
     try {
       await agentsApi.addTestCase(agent.id, { name: draft.name, caller_turns: lines(draft.caller),
-        must_include: lines(draft.must), must_not_include: lines(draft.mustNot) })
-      setDraft({ name: '', caller: '', must: '', mustNot: '' })
+        must_include: lines(draft.must), must_not_include: lines(draft.mustNot), expected_language: draft.language || null })
+      setDraft({ name: '', caller: '', must: '', mustNot: '', language: '' })
       loadCases()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not add the test')
@@ -171,7 +175,7 @@ export default function StudioTab({ agent, versions, canBuild }: { agent: Agent;
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {cases.map(c => {
-            const result = (run?.results as { case_id: string; passed: boolean; missing: string[]; forbidden: string[]; error?: string | null }[] | undefined)
+            const result = (run?.results as { case_id: string; passed: boolean; missing: string[]; forbidden: string[]; wrong_language_replies?: number[]; error?: string | null }[] | undefined)
               ?.find(r => r.case_id === c.id)
             return (
               <div key={c.id} style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', fontSize: 12.5 }}>
@@ -185,10 +189,12 @@ export default function StudioTab({ agent, versions, canBuild }: { agent: Agent;
                   Caller: {c.caller_turns.join(' → ')}
                   {c.must_include.length > 0 && <> · must say: {c.must_include.join(', ')}</>}
                   {c.must_not_include.length > 0 && <> · must not say: {c.must_not_include.join(', ')}</>}
+                  {c.expected_language && <> · replies in {LANGUAGE_NAMES[c.expected_language]}</>}
                 </div>
                 {result && !result.passed && (
                   <div style={{ color: 'var(--color-danger)', marginTop: 2 }}>
-                    {result.error ?? [result.missing.length ? `missing: ${result.missing.join(', ')}` : '', result.forbidden.length ? `said: ${result.forbidden.join(', ')}` : ''].filter(Boolean).join(' · ')}
+                    {result.error ?? [result.missing.length ? `missing: ${result.missing.join(', ')}` : '', result.forbidden.length ? `said: ${result.forbidden.join(', ')}` : '',
+                      result.wrong_language_replies?.length ? `wrong language in reply ${result.wrong_language_replies.join(', ')}` : ''].filter(Boolean).join(' · ')}
                   </div>
                 )}
               </div>
@@ -214,9 +220,16 @@ export default function StudioTab({ agent, versions, canBuild }: { agent: Agent;
               <label htmlFor="tc-mustnot" style={label}>Replies must never say (one per line)</label>
               <textarea id="tc-mustnot" className="avn-input" rows={2} value={draft.mustNot} onChange={e => setDraft(d => ({ ...d, mustNot: e.target.value }))} style={field} />
             </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label htmlFor="tc-lang" style={label}>Replies must be in</label>
+              <select id="tc-lang" className="avn-input" value={draft.language} onChange={e => setDraft(d => ({ ...d, language: e.target.value as '' | TestLanguage }))} style={field}>
+                <option value="">Any language</option>
+                {(Object.keys(LANGUAGE_NAMES) as TestLanguage[]).map(code => <option key={code} value={code}>{LANGUAGE_NAMES[code]}</option>)}
+              </select>
+            </div>
           </div>
           <Button size="sm" variant="secondary" onClick={addCase} style={{ marginTop: 8 }}
-            disabled={!draft.name.trim() || !lines(draft.caller).length || !(lines(draft.must).length || lines(draft.mustNot).length)}>Add test</Button>
+            disabled={!draft.name.trim() || !lines(draft.caller).length || !(lines(draft.must).length || lines(draft.mustNot).length || draft.language)}>Add test</Button>
         </details>
       </section>
     </div>

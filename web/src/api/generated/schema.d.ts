@@ -78,6 +78,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/agents/{agent_id}/copilot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copilot Propose
+         * @description Turn a plain-language request into a proposed change to the agent's current configuration.
+         *     Nothing is saved; apply it with /copilot/apply.
+         */
+        post: operations["copilot_propose_api_agents__agent_id__copilot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/{agent_id}/copilot/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copilot Apply
+         * @description Apply a copilot proposal to the draft, logged as a copilot change with the request as the reason.
+         */
+        post: operations["copilot_apply_api_agents__agent_id__copilot_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/agents/{agent_id}/disable": {
         parameters: {
             query?: never;
@@ -355,6 +396,44 @@ export interface paths {
          */
         post: operations["version_action_api_agents__agent_id__versions__number___action__post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Api Keys */
+        get: operations["list_api_keys_api_api_keys_get"];
+        put?: never;
+        /**
+         * Create Api Key
+         * @description The key is shown only in this response.
+         */
+        post: operations["create_api_key_api_api_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/api-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke Api Key */
+        delete: operations["revoke_api_key_api_api_keys__key_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -815,6 +894,26 @@ export interface paths {
          * @description Calls in progress right now, read from LiveKit.
          */
         get: operations["get_live_calls_api_calls_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Chat Sessions
+         * @description The most recent website and API conversations.
+         */
+        get: operations["list_chat_sessions_api_chat_sessions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2042,6 +2141,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Public Chat Message
+         * @description Send the visitor's message and get the agent's reply. Leave out `session` to start a conversation; the reply
+         *     carries its token, which later messages send back. API-key callers name the agent with `agent_id`.
+         */
+        post: operations["public_chat_message_api_public_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/chat/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Public Chat Contact
+         * @description The visitor's name and phone (and email), saved as a CRM lead with the conversation so far.
+         */
+        post: operations["public_chat_contact_api_public_chat_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/voice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Public Voice
+         * @description Start a browser voice call with the agent (widgets with voice turned on).
+         */
+        post: operations["public_voice_api_public_voice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/widget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Widget Config
+         * @description What the widget shows before the first message. Widget key only.
+         */
+        get: operations["public_widget_config_api_public_widget_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recordings/{filename}": {
         parameters: {
             query?: never;
@@ -2289,6 +2469,62 @@ export interface paths {
         get: operations["list_messages_api_whatsapp_messages_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/widgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Widgets */
+        get: operations["list_widgets_api_widgets_get"];
+        put?: never;
+        /** Create Widget */
+        post: operations["create_widget_api_widgets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/widgets/{widget_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Widget */
+        delete: operations["delete_widget_api_widgets__widget_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Widget */
+        patch: operations["update_widget_api_widgets__widget_id__patch"];
+        trace?: never;
+    };
+    "/api/widgets/{widget_id}/rotate-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate Widget Key
+         * @description A new public key; the old embed code stops working.
+         */
+        post: operations["rotate_widget_key_api_widgets__widget_id__rotate_key_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2581,6 +2817,49 @@ export interface components {
             working_hours_end?: string | null;
             /** Working Hours Start */
             working_hours_start?: string | null;
+        };
+        /** ApiKeyCreatedOut */
+        ApiKeyCreatedOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Last Used At */
+            last_used_at?: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Revoked At */
+            revoked_at?: string | null;
+        };
+        /** ApiKeyIn */
+        ApiKeyIn: {
+            /** Name */
+            name: string;
+        };
+        /** ApiKeyOut */
+        ApiKeyOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Last Used At */
+            last_used_at?: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Revoked At */
+            revoked_at?: string | null;
         };
         /** AppointmentCreate */
         AppointmentCreate: {
@@ -3275,6 +3554,42 @@ export interface components {
             /** Version Number */
             version_number: number;
         };
+        /** ChatSessionOut */
+        ChatSessionOut: {
+            /** Agent Name */
+            agent_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Lead Name */
+            lead_name?: string | null;
+            /** Messages */
+            messages: number;
+            /** Origin */
+            origin?: string | null;
+            /** Source */
+            source: string;
+            /** Turns */
+            turns: components["schemas"]["ChatTurnOut"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ChatTurnOut */
+        ChatTurnOut: {
+            /** Role */
+            role: string;
+            /** Text */
+            text: string;
+        };
         /** CheckoutIn */
         CheckoutIn: {
             /** Plan Id */
@@ -3294,10 +3609,46 @@ export interface components {
             /** Path */
             path: string;
         };
+        /** ConfigChangeOut */
+        ConfigChangeOut: {
+            /** After */
+            after?: unknown;
+            /** Before */
+            before?: unknown;
+            /** Path */
+            path: string;
+        };
         /** ConnectOut */
         ConnectOut: {
             /** Url */
             url: string;
+        };
+        /** CopilotApplyIn */
+        CopilotApplyIn: {
+            /** Patch */
+            patch: {
+                [key: string]: unknown;
+            };
+            /** Request */
+            request: string;
+        };
+        /** CopilotIn */
+        CopilotIn: {
+            /** Request */
+            request: string;
+        };
+        /** CopilotProposalOut */
+        CopilotProposalOut: {
+            /** Changes */
+            changes: components["schemas"]["ConfigChangeOut"][];
+            /** Ignored */
+            ignored: string[];
+            /** Patch */
+            patch: {
+                [key: string]: unknown;
+            };
+            /** Summary */
+            summary: string;
         };
         /** DayPoint */
         DayPoint: {
@@ -3967,6 +4318,15 @@ export interface components {
             days: number;
             totals: components["schemas"]["ProfitRow"];
         };
+        /** PublicChatOut */
+        PublicChatOut: {
+            /** Ask For Contact */
+            ask_for_contact: boolean;
+            /** Reply */
+            reply: string;
+            /** Session */
+            session?: string | null;
+        };
         /** RedirectOut */
         RedirectOut: {
             /** Url */
@@ -4146,6 +4506,8 @@ export interface components {
         TestCaseIn: {
             /** Caller Turns */
             caller_turns: string[];
+            /** Expected Language */
+            expected_language?: ("en" | "te" | "hi" | "ta" | "kn" | "ml") | null;
             /**
              * Must Include
              * @default []
@@ -4168,6 +4530,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Expected Language */
+            expected_language?: ("en" | "te" | "hi" | "ta" | "kn" | "ml") | null;
             /** Id */
             id: string;
             /**
@@ -4492,6 +4856,85 @@ export interface components {
             /** Webhook Url */
             webhook_url?: string | null;
         };
+        /** WidgetIn */
+        WidgetIn: {
+            /** Agent Id */
+            agent_id: string;
+            /** Allowed Origins */
+            allowed_origins: string[];
+            /**
+             * Color
+             * @default #7B61FF
+             */
+            color: string;
+            /** Greeting */
+            greeting?: string | null;
+            /**
+             * Lead Capture
+             * @default true
+             */
+            lead_capture: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Voice Enabled
+             * @default false
+             */
+            voice_enabled: boolean;
+        };
+        /** WidgetOut */
+        WidgetOut: {
+            /** Agent Id */
+            agent_id: string;
+            /** Agent Live */
+            agent_live: boolean;
+            /** Agent Name */
+            agent_name: string;
+            /** Allowed Origins */
+            allowed_origins: string[];
+            /** Color */
+            color: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Embed Code */
+            embed_code: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Greeting */
+            greeting?: string | null;
+            /** Id */
+            id: string;
+            /** Lead Capture */
+            lead_capture: boolean;
+            /** Name */
+            name: string;
+            /** Public Key */
+            public_key: string;
+            /** Voice Enabled */
+            voice_enabled: boolean;
+        };
+        /** WidgetPatch */
+        WidgetPatch: {
+            /** Agent Id */
+            agent_id?: string | null;
+            /** Allowed Origins */
+            allowed_origins?: string[] | null;
+            /** Color */
+            color?: string | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Greeting */
+            greeting?: string | null;
+            /** Lead Capture */
+            lead_capture?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Voice Enabled */
+            voice_enabled?: boolean | null;
+        };
         /** WorkflowAction */
         WorkflowAction: {
             /** Config */
@@ -4789,6 +5232,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionDiffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copilot_propose_api_agents__agent_id__copilot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotProposalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copilot_apply_api_agents__agent_id__copilot_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotApplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftPatchOut"];
                 };
             };
             /** @description Validation Error */
@@ -5377,6 +5890,88 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_api_keys_api_api_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"][];
+                };
+            };
+        };
+    };
+    create_api_key_api_api_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreatedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_api_key_api_api_keys__key_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -6062,6 +6657,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveCallsOut"];
+                };
+            };
+        };
+    };
+    list_chat_sessions_api_chat_sessions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatSessionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8419,6 +9045,86 @@ export interface operations {
             };
         };
     };
+    public_chat_message_api_public_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicChatOut"];
+                };
+            };
+        };
+    };
+    public_chat_contact_api_public_chat_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    public_voice_api_public_voice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    public_widget_config_api_public_widget_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     get_recording_api_recordings__filename__get: {
         parameters: {
             query?: {
@@ -8908,6 +9614,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WhatsAppMessageOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_widgets_api_widgets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetOut"][];
+                };
+            };
+        };
+    };
+    create_widget_api_widgets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WidgetIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_widget_api_widgets__widget_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                widget_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_widget_api_widgets__widget_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                widget_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WidgetPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_widget_key_api_widgets__widget_id__rotate_key_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                widget_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetOut"];
                 };
             };
             /** @description Validation Error */

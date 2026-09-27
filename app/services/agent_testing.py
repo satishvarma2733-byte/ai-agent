@@ -104,11 +104,27 @@ def reply(version: AgentVersion, tenant_id: str, turns: list[dict[str, str]], co
     return text or "(no reply)"
 
 
+# Languages a test can require: the ones whose script tells them apart (see call_language).
+TESTABLE_LANGUAGES = ("en", "te", "hi", "ta", "kn", "ml")
+# English replies may name a place or two in another script; Indian-language replies usually carry English
+# words ("appointment", brand names), so a clear share of their own script is enough; a reply in English or
+# another script scores about 0.
+LANGUAGE_SHARE = {"en": 0.8}
+DEFAULT_LANGUAGE_SHARE = 0.35
+
+
 def check_case(case: AgentTestCase, replies: list[str]) -> dict[str, Any]:
+    from app.services import call_language
     said = "\n".join(replies).lower()
     missing = [p for p in (case.must_include or []) if p.lower() not in said]
     forbidden = [p for p in (case.must_not_include or []) if p.lower() in said]
-    return {"passed": not missing and not forbidden, "missing": missing, "forbidden": forbidden}
+    wrong_language: list[int] = []
+    expected = getattr(case, "expected_language", None)
+    if expected:
+        needed = LANGUAGE_SHARE.get(expected, DEFAULT_LANGUAGE_SHARE)
+        wrong_language = [i + 1 for i, r in enumerate(replies) if call_language.share(r, expected) < needed]
+    return {"passed": not missing and not forbidden and not wrong_language, "missing": missing, "forbidden": forbidden,
+            "expected_language": expected, "wrong_language_replies": wrong_language}
 
 
 def run_tests(db: Session, agent: Agent, version: AgentVersion, user_id: str | None, config: dict) -> AgentTestRun:

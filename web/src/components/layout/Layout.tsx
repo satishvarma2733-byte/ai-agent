@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Settings2, PhoneCall, Users, CalendarDays, BookOpen,
   PhoneOutgoing, Bot, BarChart3, PhoneIncoming, FileText, Bell, Search,
   ChevronLeft, ChevronRight, Zap, Activity, GitBranch, Radio, UserCheck,
-  CreditCard, Sun, Moon, Command, Wifi, WifiOff, Menu, X, Shield, ListTodo,
+  CreditCard, Sun, Moon, Command, Wifi, WifiOff, Menu, X, Shield, ListTodo, MessagesSquare,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -30,6 +30,7 @@ const navGroups = [
       { to: '/inbound', label: 'Inbound', icon: PhoneIncoming },
       { to: '/outbound', label: 'Outbound', icon: PhoneOutgoing },
       { to: '/call-logs', label: 'Call Logs', icon: PhoneCall },
+      { to: '/website-chat', label: 'Website Chat', icon: MessagesSquare },
     ],
   },
   {

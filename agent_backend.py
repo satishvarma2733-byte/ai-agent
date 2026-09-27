@@ -970,6 +970,8 @@ async def entrypoint(ctx: JobContext) -> None:
 
     # A browser test from Agent Studio: a real conversation with a chosen version, but nothing it does counts.
     is_test_call = bool(routing and job_meta.get("test_version"))
+    # A visitor talking through the website chat widget: a real call, logged as "web".
+    is_web_call = job_meta.get("channel") == "web"
 
     if is_rate_limited(caller_phone):
         logger.warning("[RATE-LIMIT] Blocked %s", caller_phone)
@@ -1516,7 +1518,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 interrupt_count,
                 ctx.room.name,
                 tenant_id=job_meta.get("tenant_id") if job_meta else None,
-                direction="outbound" if is_outbound_call else "inbound",
+                direction="web" if is_web_call else "outbound" if is_outbound_call else "inbound",
                 agent_id=job_meta.get("agent_id") if job_meta else None,
             )
             if save_result.get("success"):

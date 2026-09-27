@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from app.core.cors import AppCORSMiddleware
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
@@ -25,7 +25,7 @@ from app.models.campaign import Campaign, CampaignLead
 from app.routers import (
     auth, leads, calls, appointments,
     cms, workflows, analytics, agents,
-    kb, inbound, contacts, campaigns, system, team, workspace, lead_fields, webhooks, notifications, calendar, whatsapp, billing, sms, tasks
+    kb, inbound, contacts, campaigns, system, team, workspace, lead_fields, webhooks, notifications, calendar, whatsapp, billing, sms, tasks, widgets
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -93,7 +93,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS middleware mapping
 app.add_middleware(
-    CORSMiddleware,
+    AppCORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
@@ -125,6 +125,8 @@ app.include_router(billing.router)
 app.include_router(calendar.ical_router)
 app.include_router(sms.router)
 app.include_router(tasks.router)
+app.include_router(widgets.router)
+app.include_router(widgets.public_router)
 
 # Uploaded CMS media. Only well-formed stored names of allowed passive types are served, with a fixed
 # content type and a sandbox CSP (see app/services/media_files.py); everything else is 404.
